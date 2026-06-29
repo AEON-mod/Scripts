@@ -1,249 +1,270 @@
-# 🎬 mpvpaper Live Wallpaper — Hyprland Setup Guide
+<div align="center">
 
-> **Smooth, GPU-decoded video wallpapers on Hyprland/Wayland with near-zero CPU overhead.**
-> This guide documents every pitfall encountered and how to fix them, so you don't have to.
+# 🎬 mpvpaper Live Wallpaper
+
+**GPU-accelerated video wallpapers for Hyprland — built for [Caelestia](https://github.com/caelestia-dots/caelestia) dotfiles**
+
+[![Hyprland](https://img.shields.io/badge/Hyprland-Wayland-blue?style=flat-square&logo=wayland)](https://hyprland.org)
+[![mpvpaper](https://img.shields.io/badge/mpvpaper-1.8-orange?style=flat-square)](https://github.com/GhostNaN/mpvpaper)
+[![GPU](https://img.shields.io/badge/GPU-NVDEC%20accelerated-76b900?style=flat-square&logo=nvidia)](https://developer.nvidia.com)
+[![Shell](https://img.shields.io/badge/Shell-Bash-4EAA25?style=flat-square&logo=gnubash)](https://www.gnu.org/software/bash/)
+
+Play any `.mp4 / .webm / .mkv` as your desktop wallpaper with hardware decoding,  
+automatic color scheme extraction, and full Caelestia integration — at ~20% CPU.
+
+</div>
 
 ---
 
-## 📋 Table of Contents
-- [Requirements](#requirements)
-- [Installation](#installation)
-- [The Problems You'll Hit (And Their Fixes)](#the-problems-youll-hit-and-their-fixes)
-- [Scripts](#scripts)
-- [Power Management](#power-management)
-- [Usage](#usage)
-- [Benchmarks](#benchmarks)
+## ✨ Features
+
+- 🎮 **NVDEC hardware decoding** — GPU does the work, not your CPU
+- 🔄 **Cycles wallpapers** — press the keybind to jump to the next video
+- 🎨 **Caelestia color extraction** — updates your shell theme from a video frame
+- 🔋 **Auto-sleep** — mpvpaper pauses when wallpaper is fully covered (saves power)
+- 🔄 **Persist across reboots** — startup script auto-restores your last video
+- 🛠 **Batch transcoder** — downscales 4K/1440p to your screen resolution in one command
+- 🐧 **Wallpaper Engine compatible** — coexists cleanly with linux-wallpaperengine scenes
 
 ---
 
-## Requirements
+## 📋 Requirements
 
 | Package | Purpose |
 |---------|---------|
-| `mpvpaper` | Renders video as Wayland wallpaper via libmpv |
-| `ffmpeg` | Video transcoding (use `/usr/bin/ffmpeg` — see pitfalls) |
-| `nvidia-utils` | NVENC/NVDEC GPU codec support |
-| `legion-linux` *(optional)* | Fan control on Lenovo Legion laptops |
+| `mpvpaper` | Video wallpaper engine |
+| `ffmpeg` | Frame extraction + transcoding |
+| `jq` | Editing `shell.json` for Caelestia |
+| `caelestia` | Color scheme updates from video frame |
+| `hyprctl` | Screen resolution detection |
 
 ```bash
-# Arch / Hyprland
-sudo pacman -S mpvpaper ffmpeg nvidia-utils
+# Arch / CachyOS / EndeavourOS
+sudo pacman -S mpvpaper ffmpeg jq
+# caelestia is installed as part of the Caelestia dotfiles setup
 ```
 
 ---
 
-## Installation
+## 📁 File Structure
+
+```
+mpvpaper-live-wallpaper/
+├── live-wallpaper.sh          ← Main script — launch / cycle wallpapers
+├── wallpaper-hook.sh          ← Caelestia post-hook (runs after wallpaper change)
+├── wallpaper-startup.sh       ← Restores wallpaper on Hyprland startup
+├── transcode-wallpapers.sh    ← Batch downscale 4K→1080p with NVENC
+├── game-mode.sh               ← (optional) Power profile switcher
+├── cpu-power-limits.service   ← (optional) Systemd service for CPU TDP limits
+└── README.md
+```
+
+**Install locations** (where files actually live on your system):
+```
+~/.config/hypr/scripts/live-wallpaper.sh
+~/.config/hypr/scripts/wallpaper-hook.sh       ← symlinked from Caelestia
+~/.config/hypr/scripts/wallpaper-startup.sh    ← symlinked from Caelestia
+~/Pictures/Wallpapers/live-wallpaper/          ← drop your videos here
+```
+
+---
+
+## 🚀 Installation
+
+### 1 — Clone and copy scripts
 
 ```bash
-# 1. Clone this repo
-git clone https://github.com/AEON-mod/Scripts.git ~/GitHub/personal/Scripts
+git clone git@github.com:AEON-mod/Scripts.git ~/GitHub/personal/Scripts
+cd ~/GitHub/personal/Scripts/mpvpaper-live-wallpaper
 
-# 2. Copy the scripts to your config
-mkdir -p ~/.config/hypr/scripts
-cp mpvpaper-live-wallpaper/live-wallpaper.sh ~/.config/hypr/scripts/
-cp mpvpaper-live-wallpaper/transcode-wallpapers.sh ~/Pictures/Wallpapers/
+# Copy the main script
+cp live-wallpaper.sh ~/.config/hypr/scripts/live-wallpaper.sh
 chmod +x ~/.config/hypr/scripts/live-wallpaper.sh
-chmod +x ~/Pictures/Wallpapers/transcode-wallpapers.sh
+```
 
-# 3. Put your wallpaper videos here
+> **Caelestia users:** `wallpaper-hook.sh` and `wallpaper-startup.sh` are managed by  
+> Caelestia itself inside `~/.local/share/caelestia/hypr/scripts/`. Do **not** overwrite them —  
+> they are already configured. Only copy `live-wallpaper.sh`.
+
+### 2 — Create the wallpaper directory
+
+```bash
 mkdir -p ~/Pictures/Wallpapers/live-wallpaper
-# (copy your .mp4 / .webm / .mkv files here)
-
-# 4. Transcode them to 1080p30 for optimal performance (CRITICAL — see below)
-bash ~/Pictures/Wallpapers/transcode-wallpapers.sh
-
-# 5. Launch!
-bash ~/.config/hypr/scripts/live-wallpaper.sh
+# Drop any .mp4 / .webm / .mkv files in here
 ```
 
----
+### 3 — Add a Hyprland keybind
 
-## The Problems You'll Hit (And Their Fixes)
+Add this to your `~/.config/hypr/hyprland.conf` (or user config):
 
-### ❌ Problem 1: CPU at 90%+ with `vf=scale`
-
-**Symptom:** mpvpaper uses 80–90% CPU, fans max out, temps hit 87–89°C.
-
-**Cause:** Using `vf=scale=1920:1080` in mpvpaper options. This runs a **software** scale filter on every decoded frame at full framerate — on CPU.
-
-**Fix:** Remove `vf=scale` entirely. The Wayland compositor handles display scaling natively at zero CPU cost. mpvpaper already fills the screen via `panscan=1.0`.
-
-```bash
-# ❌ Wrong
-mpvpaper -o "hwdec=nvdec vf=scale=1920:1080" '*' video.mp4
-
-# ✅ Correct
-mpvpaper -s -o "loop=yes hwdec=nvdec-copy hwdec-codecs=all mute=yes panscan=1.0" '*' video.mp4
-```
-
----
-
-### ❌ Problem 2: `nvdec` fails silently, falls back to CPU decode
-
-**Symptom:** You set `hwdec=nvdec` but CPU is still at 90%+. GPU shows 0% utilization.
-
-**Cause:** mpvpaper uses a **libmpv EGL surface** (not a native dmabuf surface). Pure `nvdec` requires zero-copy GPU→compositor frame handoff which needs dmabuf. Since mpvpaper's surface can't do that, mpv silently falls back to software decode.
-
-**Fix:** Use `hwdec=nvdec-copy` instead. This decodes on GPU, copies to RAM, then uploads to EGL. Not as efficient as true zero-copy but still dramatically better than full software decode.
-
-```bash
-# ❌ Wrong — silently falls back to CPU on mpvpaper
-hwdec=nvdec
-
-# ✅ Correct for mpvpaper's EGL architecture
-hwdec=nvdec-copy hwdec-codecs=all
-```
-
----
-
-### ❌ Problem 3: Playing 4K video on a 1080p screen
-
-**Symptom:** Even with `nvdec-copy`, CPU sits at 35–50%, drops frames constantly.
-
-**Cause:** Your screen is 1920×1080 but the video is 3840×2160 (4K) or 2560×1440 (1440p). The GPU decodes **4× more pixels** than needed, then copies that massive frame to RAM. The Wayland compositor then scales it down — 4× wasted work every frame at 60fps.
-
-**Fix:** Pre-transcode all wallpaper videos to your screen resolution (1080p) at 30fps using NVENC. Run `transcode-wallpapers.sh` — it does this automatically.
-
-```bash
-bash ~/Pictures/Wallpapers/transcode-wallpapers.sh
-```
-
-Results after transcoding 4K → 1080p30:
-- CPU: 90% → **~22%**
-- Temps: 87°C → **~65°C**
-- Frame drops: 200+ → **0**
-- File sizes: reduced by 60–90%
-
----
-
-### ❌ Problem 4: `ffmpeg`/`ffprobe` wrapped in firejail
-
-**Symptom:** `ffprobe` returns "Permission denied" on perfectly readable files. `ffmpeg` fails mysteriously.
-
-**Cause:** `/usr/local/bin/ffmpeg` and `/usr/local/bin/ffprobe` are symlinks to `/usr/bin/firejail`. Firejail sandboxes filesystem access and blocks CUDA/GPU passthrough.
-
-**Fix:** Always call the real binaries directly:
-```bash
-# ❌ Firejailed versions (avoid)
-ffmpeg ...
-ffprobe ...
-
-# ✅ Real binaries (use these)
-/usr/bin/ffmpeg ...
-/usr/bin/ffprobe ...
-```
-
-Or check which is which:
-```bash
-which ffmpeg          # might show /usr/local/bin/ffmpeg → firejail
-ls -la /usr/bin/ffmpeg   # real ffmpeg binary
-```
-
----
-
-### ❌ Problem 5: CPU power limits set incorrectly (200W PL1!)
-
-**Symptom:** System runs hot even at idle. `constraint_0` shows an absurd value.
-
-**Cause:** Some tools write to the wrong powercap constraint. On Intel 12th gen:
-- `constraint_0` = **PL1** (long_term sustained — should be ≤ hardware max)
-- `constraint_1` = **PL2** (short_term burst — can be slightly higher)
-
-**Fix:** Use `game-mode.sh` to set correct values, and install a boot service so they persist:
-
-```bash
-sudo bash ~/.scripts/game-mode.sh off   # sets PL1=45W PL2=55W
-
-# Install boot persistence
-sudo cp cpu-power-limits.service /etc/systemd/system/
-sudo systemctl enable --now cpu-power-limits.service
-```
-
----
-
-### ❌ Problem 6: Fans stuck at max speed
-
-**Symptom:** Fans never slow down even after temps drop.
-
-**Cause:** `legion_cli maximumfanspeed-enable` was called (usually by a game launcher script) and never disabled.
-
-**Fix:**
-```bash
-sudo legion_cli maximumfanspeed-disable
-```
-
-Add this to your game-off script so it always resets.
-
----
-
-## Scripts
-
-| Script | Location | Purpose |
-|--------|----------|---------|
-| `live-wallpaper.sh` | `~/.config/hypr/scripts/` | Launch/cycle video wallpapers |
-| `transcode-wallpapers.sh` | `~/Pictures/Wallpapers/` | Batch convert videos to 1080p30 |
-| `game-mode.sh` | `~/.scripts/` | Power profiles (gaming/balanced/wallpaper) |
-
----
-
-## Power Management
-
-Three power modes available via `game-mode.sh`:
-
-| Mode | PL1 (sustained) | PL2 (burst) | EPP | Fans | Use when |
-|------|----------------|-------------|-----|------|----------|
-| `on` | 55W (hw max) | 65W | performance | max | Gaming |
-| `off` | 45W | 55W | balance_performance | auto | Normal desktop |
-| `wallpaper` | 35W | 45W | balance_power | auto | Live wallpaper running |
-
-```bash
-sudo bash ~/.scripts/game-mode.sh on        # gaming
-sudo bash ~/.scripts/game-mode.sh off       # balanced (default)
-sudo bash ~/.scripts/game-mode.sh wallpaper # coolest + quietest
-```
-
-To allow running without password:
-```bash
-echo 'yourusername ALL=(root) NOPASSWD: /home/yourusername/.scripts/game-mode.sh, /usr/bin/legion_cli' \
-  | sudo tee /etc/sudoers.d/power-mode
-sudo chmod 440 /etc/sudoers.d/power-mode
-```
-
----
-
-## Usage
-
-```bash
-# Play next wallpaper in rotation
-bash ~/.config/hypr/scripts/live-wallpaper.sh
-
-# Play a specific video
-bash ~/.config/hypr/scripts/live-wallpaper.sh ~/Pictures/Wallpapers/live-wallpaper/video.mp4
-
-# Stop wallpaper
-killall mpvpaper
-
-# Add to Hyprland keybind (hyprland.conf)
+```conf
 bind = $mainMod, W, exec, bash ~/.config/hypr/scripts/live-wallpaper.sh
 ```
 
----
+Press `Super + W` to launch / cycle to the next video wallpaper.
 
-## Benchmarks
+### 4 — (Recommended) Transcode high-res videos
 
-Tested on: **Lenovo Legion / Intel i7-12650HX / RTX 4050 Laptop / 1920×1080**
+If you have 4K or 1440p wallpapers, transcode them down to your screen resolution first.  
+This alone drops CPU usage from ~90% to ~20%:
 
-| Scenario | CPU % | GPU % | Temp | Dropped Frames |
-|----------|-------|-------|------|----------------|
-| 4K60 + `vf=scale` + `nvdec-copy` | **93.9%** | 6% | **87–89°C** | 200+ |
-| 4K60 + no `vf=scale` + `nvdec-copy` | ~45% | 6% | ~80°C | ~50 |
-| **1080p30 + `nvdec-copy` (recommended)** | **~22%** | **1%** | **~65°C** | **0** |
-
-> **TL;DR:** Transcode to 1080p30, use `nvdec-copy`, never use `vf=scale`. That's it.
+```bash
+bash ~/GitHub/personal/Scripts/mpvpaper-live-wallpaper/transcode-wallpapers.sh
+```
 
 ---
 
-## Credits
+## 🎮 Usage
 
-Figured out through hours of debugging on Hyprland + Wayland + NVIDIA Optimus.
-Shared so no one else has to suffer through the same issues.
+```bash
+# Cycle to the next video in ~/Pictures/Wallpapers/live-wallpaper/
+bash ~/.config/hypr/scripts/live-wallpaper.sh
+
+# Play a specific video file
+bash ~/.config/hypr/scripts/live-wallpaper.sh ~/Pictures/Wallpapers/live-wallpaper/city.mp4
+
+# Stop the wallpaper
+killall mpvpaper
+
+# Batch transcode all oversized videos (run once after adding new wallpapers)
+bash ~/GitHub/personal/Scripts/mpvpaper-live-wallpaper/transcode-wallpapers.sh
+```
+
+---
+
+## 🔗 How It Works with Caelestia
+
+Caelestia manages wallpapers through `caelestia wallpaper -f <image>`, which calls `wallpaper-hook.sh` via a post-hook.  
+Video wallpapers need special handling to avoid a conflict loop:
+
+```
+Super+W pressed
+    └─► live-wallpaper.sh
+            ├─ Kills any existing mpvpaper / wallpaperengine
+            ├─ Sets shell.json → wallpaperEnabled: false   (hides Caelestia's image layer)
+            ├─ Launches mpvpaper with nvdec-copy
+            ├─ Extracts a frame from the video with ffmpeg
+            └─ Calls: LIVE_WALLPAPER_COLORS_ONLY=1 caelestia wallpaper -f <frame>
+                    └─► wallpaper-hook.sh
+                            └─ Sees env var → exits immediately (does NOT kill mpvpaper)
+                                              (color scheme updates silently in background)
+```
+
+**Switching back to a static image wallpaper** via Caelestia's normal UI:
+```
+caelestia wallpaper -f image.jpg
+    └─► wallpaper-hook.sh
+            ├─ Kills mpvpaper
+            ├─ Removes is_live_wallpaper_active flag
+            └─ Sets shell.json → wallpaperEnabled: true   (re-enables Caelestia's image layer)
+```
+
+**On Hyprland startup**, `wallpaper-startup.sh` checks for the `is_live_wallpaper_active` flag and  
+auto-resumes the last video — so your live wallpaper persists across reboots.
+
+---
+
+## ⚡ Performance Guide
+
+### Why your CPU spikes — and how to fix it
+
+#### ❌ Problem 1 — `vf=scale` destroys CPU
+
+Using `vf=scale=WxH` forces software scaling on every decoded frame at full framerate:
+
+```bash
+# ❌ Wrong — CPU spikes to 90%+
+mpvpaper -o "hwdec=nvdec vf=scale=1920:1080" '*' video.mp4
+
+# ✅ Correct — compositor handles scaling natively at zero CPU cost
+mpvpaper -s -o "loop=yes hwdec=nvdec-copy hwdec-codecs=all mute=yes panscan=1.0" '*' video.mp4
+```
+
+#### ❌ Problem 2 — `hwdec=nvdec` silently falls back to CPU
+
+mpvpaper uses a **libmpv EGL surface**, not a native dmabuf surface. Pure `nvdec` requires  
+zero-copy GPU→compositor handoff via dmabuf — which mpvpaper can't provide. It silently falls  
+back to software decode with no warning.
+
+```bash
+# ❌ Silently uses CPU on mpvpaper
+hwdec=nvdec
+
+# ✅ GPU decodes, copies frame to RAM for EGL upload — correct for mpvpaper
+hwdec=nvdec-copy hwdec-codecs=all
+```
+
+#### ❌ Problem 3 — Playing 4K video on a 1080p screen
+
+The GPU decodes 4× more pixels than your screen needs, copies the giant frame to RAM, and  
+the compositor scales it down — 4× wasted work at 60fps. Pre-transcode instead:
+
+```bash
+bash transcode-wallpapers.sh   # auto-detects your screen resolution
+```
+
+**Before vs After:**
+
+| Metric | 4K60 naive | 1080p30 transcoded ✅ |
+|--------|-----------|----------------------|
+| CPU | ~90% | **~20%** |
+| Temps | ~87°C | **~65°C** |
+| Dropped frames | 200+/min | **0** |
+
+#### ❌ Problem 4 — ffmpeg/ffprobe wrapped in Firejail
+
+Some setups symlink `/usr/local/bin/ffmpeg` → `/usr/bin/firejail`, which blocks GPU access  
+and causes permission errors. The transcode script auto-detects and bypasses this by calling  
+`/usr/bin/ffmpeg` directly.
+
+```bash
+# Check if you're affected
+ls -la $(which ffmpeg)
+# If it points to /usr/bin/firejail — you are
+```
+
+---
+
+## 📊 Benchmarks
+
+> Tested on: **Intel i7-12650HX · RTX 4050 Laptop · 1920×1080 · Hyprland · CachyOS**
+
+| Scenario | CPU % | Temp | Dropped Frames |
+|----------|-------|------|----------------|
+| 4K60 + `vf=scale` + `nvdec-copy` | ~94% | 87–89°C | 200+/min |
+| 4K60, no `vf=scale` + `nvdec-copy` | ~45% | ~80°C | ~50/min |
+| **1080p30 + `nvdec-copy`** ✅ | **~20%** | **~65°C** | **0** |
+
+---
+
+## ❓ FAQ
+
+**Q: Does this work on AMD GPUs?**  
+Replace `hwdec=nvdec-copy` with `hwdec=vaapi-copy`. In `transcode-wallpapers.sh`, change `h264_nvenc` → `h264_vaapi` and remove the CUDA hwaccel flags.
+
+**Q: Does this work without a dedicated GPU?**  
+Yes. Use `hwdec=auto` and remove NVENC flags in the transcode script. Software decode at 1080p30 is manageable on modern CPUs.
+
+**Q: My video plays but Caelestia's color scheme doesn't update.**  
+Make sure `ffmpeg` can access the video file (check firejail — see Problem 4). The frame cache is at `~/.cache/caelestia-live-frame.jpg`.
+
+**Q: The wallpaper doesn't come back after reboot.**  
+Check that `wallpaper-startup.sh` is exec'd from your Hyprland config and that `~/.local/state/caelestia/wallpaper/is_live_wallpaper_active` exists.
+
+**Q: Can I use this on GNOME/KDE?**  
+mpvpaper is Wayland-native and works best with Hyprland/Sway. For other compositors, check mpvpaper's [compatibility list](https://github.com/GhostNaN/mpvpaper#compatibility).
+
+**Q: Why 30fps instead of 60fps for transcoding?**  
+mpvpaper copies each decoded frame from GPU RAM to the EGL surface. At 30fps that copy runs half as often — imperceptible on a background wallpaper, but halves the overhead.
+
+---
+
+## 📜 License
+
+Scripts are free to use and modify. If you improve something, a PR is welcome.
+
+---
+
+<div align="center">
+Made for <a href="https://github.com/caelestia-dots">Caelestia</a> · Runs on <a href="https://hyprland.org">Hyprland</a> · Powered by <a href="https://github.com/GhostNaN/mpvpaper">mpvpaper</a>
+</div>
