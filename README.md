@@ -21,18 +21,6 @@ Welcome to my personal script library. Rather than relying on bloated software f
 
 ---
 
-## ✦ The Arsenal
-
-Below are the primary tools currently available in this repository. Each utility lives in its own dedicated directory with comprehensive documentation, setup guides, and troubleshooting steps.
-
-| Utility | Description | Core Language |
-| :--- | :--- | :---: |
-| 🧠 **[AI Wallpaper Renamer](./AI-Wallpaper-Renamer/)** | Analyzes images using Vision-Language AI (BLIP) to generate aesthetic, descriptive filenames while standardizing formats. | `Python` |
-| 🖱️ **[Cursor Installer](./Cursor-Installer/)** | Universal installer that converts Windows cursor themes into native X11 formats, automatically generating symlinks for flawless compatibility. | `Bash` / `Python` |
-| 🎥 **[Wallpaper Transcoder](./Wallpaper-Transcoder/)** | Hardware-accelerated (NVENC) transcoder that optimizes high-res/high-fps animated wallpapers into lightweight 1080p MP4s to save GPU bandwidth. | `Bash` |
-
-<br />
-
 ## ✦ Getting Started
 
 To get started, simply clone this repository to your local machine:
