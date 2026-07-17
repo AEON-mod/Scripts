@@ -1,68 +1,39 @@
-# 📜 Scripts
-
 <div align="center">
 
-A collection of utility scripts for Windows automation and system management.
+# 🛠️ Desktop Utility Scripts
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](LICENSE)
+*A curated collection of my personal scripts to automate, optimize, and customize the desktop experience.*
 
 </div>
 
 ---
 
-## 📁 Contents
+## 🌟 Overview
 
-This repository contains helpful PowerShell and Batch scripts for:
-- System automation
-- Windows administration
-- Performance optimization
-- Utility functions
+Welcome to my personal collection of desktop scripts! I built these tools to solve everyday annoyances and streamline my workflow. Instead of dealing with tedious manual tasks, these scripts handle the heavy lifting automatically.
+
+### 📂 Included Utilities
+
+- [**AI Wallpaper Renamer**](./AI-Wallpaper-Renamer/) — Automatically analyzes your image files using Vision-Language AI to give them aesthetic, descriptive names, while converting them to JPEG.
+- [**Cursor Installer**](./Cursor-Installer/) — A universal installer that effortlessly converts Windows cursor themes to native Linux formats, mapping all the correct symlinks for compatibility.
+- [**Wallpaper Transcoder**](./Wallpaper-Transcoder/) — Optimizes high-resolution, high-framerate animated wallpapers and GIFs by hardware-transcoding them to efficient 1080p MP4s to save GPU resources.
 
 ---
 
 ## 🚀 Getting Started
 
-1. Clone or download the repository
-2. Navigate to the script you need
-3. Review the script before execution
-4. Run with appropriate permissions (admin rights may be required)
+Each utility lives in its own folder with a dedicated `README.md` containing specific installation requirements, instructions, and troubleshooting tips. 
 
-> **⚠️ Important:** Always review scripts before running them on your system.
+Navigate to the directory of the script you want to use to get started!
 
 ---
 
-## 📋 Script Categories
+## 📝 Disclaimer
 
-- **System Administration** - Windows management and maintenance
-- **Utilities** - Helpful automation tools
-- **Optimization** - Performance enhancement scripts
-
----
-
-## 🛠️ Requirements
-
-- **Windows 7+** or **Windows 11**
-- **PowerShell 3.0+** (for PS scripts)
-- **Administrator privileges** (for some scripts)
-
----
-
-## 🤝 Contribute
-
-Found a bug or have a suggestion? Feel free to:
-- [Open an Issue](https://github.com/AEON-mod/Scripts/issues)
-- [Create a Pull Request](https://github.com/AEON-mod/Scripts/pulls)
-
----
-
-## 📜 License
-
-MIT License - See [LICENSE](LICENSE) file for details
+I wrote these scripts myself for my personal setup. Feel free to use, modify, and distribute them however you like—treat them just like open-source software!
 
 ---
 
 <div align="center">
-
-Made with ❤️ by [AEON-mod](https://github.com/AEON-mod)
-
+Made with ❤️
 </div>
