@@ -20,9 +20,11 @@ Navigate to the directory of the script you want to use to get started!
 
 ---
 
-## 📝 Disclaimer
+## 📝 Disclaimer & License
 
-I wrote these scripts myself for my personal setup. Feel free to use, modify, and distribute them however you like—treat them just like open-source software!
+These scripts are provided "as is", without warranty of any kind. I built them for personal use, but they are released as open-source under the **MIT License**. You are completely free to use, modify, and distribute them. 
+
+See the [LICENSE](LICENSE) file for more details.
 
 ---
 

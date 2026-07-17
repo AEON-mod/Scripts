@@ -33,5 +33,7 @@ bash transcode-wallpapers.sh
 - **GIFs show as static**: This is a known issue with `mpvpaper`. Ensure you are running this script to convert them to `.mp4` files.
 - **Out of space**: Check the `original/` folder! Once you are satisfied with the transcoded files, you can safely delete the `original/` folder to free up disk space.
 
-## 📝 Disclaimer
-I wrote this script myself to streamline my workflow. Feel free to use, modify, and distribute it as you see fit—treat it just like open-source software!
+## 📝 Disclaimer & License
+This script is provided "as is", without warranty of any kind. I built this tool for personal use, but I am releasing it as open-source under the **MIT License**. 
+
+You are completely free to use, modify, and distribute it. See the [LICENSE](LICENSE) file for more details.

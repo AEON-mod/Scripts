@@ -33,5 +33,7 @@ python wallpaper_renamer.py /path/to/wallpapers
 - **`CUDA out of memory` / No GPU**: Ensure your PyTorch installation supports CUDA. If you do not have a dedicated GPU, you can edit the script to change `.to("cuda")` to `.to("cpu")` (note: processing will take significantly longer).
 - **Errors processing specific files**: Broken, corrupted, or unsupported images will automatically be skipped and a final error tally will be reported at the end of the script execution.
 
-## 📝 Disclaimer
-I wrote this script myself to streamline my workflow. Feel free to use, modify, and distribute it as you see fit—treat it just like open-source software!
+## 📝 Disclaimer & License
+This script is provided "as is", without warranty of any kind. I built this tool for personal use, but I am releasing it as open-source under the **MIT License**. 
+
+You are completely free to use, modify, and distribute it. See the [LICENSE](LICENSE) file for more details.

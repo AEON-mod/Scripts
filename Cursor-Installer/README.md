@@ -37,5 +37,7 @@ bash convert_cursors.sh
   hyprctl setcursor <ThemeName> 24
   ```
 
-## 📝 Disclaimer
-I wrote this script myself to streamline my workflow. Feel free to use, modify, and distribute it as you see fit—treat it just like open-source software!
+## 📝 Disclaimer & License
+This script is provided "as is", without warranty of any kind. I built this tool for personal use, but I am releasing it as open-source under the **MIT License**. 
+
+You are completely free to use, modify, and distribute it. See the [LICENSE](LICENSE) file for more details.
