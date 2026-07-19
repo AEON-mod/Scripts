@@ -1,6 +1,9 @@
 import os
 import re
 import argparse
+import io
+import subprocess
+import shutil
 from pathlib import Path
 from PIL import Image
 import torch
@@ -10,7 +13,9 @@ from transformers import BlipProcessor, BlipForConditionalGeneration
 
 warnings.filterwarnings("ignore")
 
-SUPPORTED       = {".jpg", ".jpeg", ".png", ".webp", ".gif", ".bmp"}
+IMAGE_EXTS      = {".jpg", ".jpeg", ".png", ".webp", ".bmp"}
+VIDEO_EXTS      = {".mp4", ".webm", ".mkv", ".avi", ".mov", ".gif"}
+SUPPORTED       = IMAGE_EXTS | VIDEO_EXTS
 STOP_WORDS      = {"a", "an", "the", "in", "on", "of", "with", "is", "at", "to", "and", "by", "for", "from", "some", "there", "are", "it", "very", "photo", "image", "background", "man", "woman", "men", "women", "guy"}
 
 print("Loading BLIP local VLM...", flush=True)
@@ -19,7 +24,22 @@ model = BlipForConditionalGeneration.from_pretrained("Salesforce/blip-image-capt
 
 def get_blip_name(img_path: Path):
     try:
-        image = Image.open(img_path).convert('RGB')
+        if img_path.suffix.lower() in VIDEO_EXTS:
+            cmd = [
+                "ffmpeg",
+                "-i", str(img_path),
+                "-vframes", "1",
+                "-f", "image2pipe",
+                "-vcodec", "png",
+                "-"
+            ]
+            result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, timeout=10)
+            if result.returncode != 0 or not result.stdout:
+                return None, None
+            image = Image.open(io.BytesIO(result.stdout)).convert('RGB')
+        else:
+            image = Image.open(img_path).convert('RGB')
+            
         # unconditional image captioning
         inputs = processor(image, return_tensors="pt").to("cuda")
         out = model.generate(**inputs, max_new_tokens=15)
@@ -81,11 +101,16 @@ def process_directory(target_dir: Path):
             errors += 1
             continue
             
-        dest = unique_dest(src.parent, name, ".jpg")
         try:
-            image.save(dest, "JPEG", quality=95)
-            if src.absolute() != dest.absolute():
-                src.unlink()
+            if src.suffix.lower() in VIDEO_EXTS:
+                dest = unique_dest(src.parent, name, src.suffix.lower())
+                if src.absolute() != dest.absolute():
+                    shutil.move(str(src), str(dest))
+            else:
+                dest = unique_dest(src.parent, name, ".jpg")
+                image.save(dest, "JPEG", quality=95)
+                if src.absolute() != dest.absolute():
+                    src.unlink()
             renamed += 1
         except Exception as e:
             errors += 1
