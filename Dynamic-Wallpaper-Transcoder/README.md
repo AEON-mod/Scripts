@@ -10,6 +10,7 @@ A smart batch transcoder designed to optimize animated wallpapers for desktop wa
 
 This script elegantly solves that problem by:
 - **Dynamic Resolution**: Automatically detects your active monitor's resolution (e.g., `3840x2160`, `2560x1440`, `1920x1080`) using `xrandr`.
+- **Interactive Multi-Monitor Support**: If you have multiple monitors with DIFFERENT resolutions (e.g., one 4K and one 1080p), the script asks which resolution to target. You can choose a specific one, or choose "ALL". If you choose all, it transcodes the wallpapers into separate subfolders for each resolution perfectly. If it detects only one resolution, it automatically proceeds without asking to save you time.
 - **Smart Scaling**: Intelligently upscales low-res videos or downscales high-res videos to perfectly fit your detected resolution while strictly maintaining the aspect ratio.
 - **Battery Optimization**: Caps all wallpapers at `30fps`. A 144Hz wallpaper might look cool, but it drains laptop batteries extremely fast. 30fps is the perfect sweet spot for smooth animated backgrounds.
 - **Maximum Quality**: Employs the highest quality encoding presets (`p7`/`cq 15` for NVENC, `slow`/`crf 16` for libx264) to ensure the final result has zero compression artifacts. Transcoding takes a little longer, but guarantees pristine visuals.
