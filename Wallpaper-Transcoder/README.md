@@ -14,6 +14,7 @@ This script elegantly solves that problem by:
 - **GIF Optimization**: Wallpaper engines often struggle to seamlessly loop GIF files. This script intelligently converts GIFs to standard MP4s using a two-pass palette extraction method, ensuring 100% color accuracy and perfect looping.
 - **Safe Backup**: Preserves your original uncompressed files in a dedicated `original/` subfolder.
 - **Smart Skipping**: Automatically skips already transcoded files, making it safe to run multiple times when adding new wallpapers.
+- **Maximum Quality**: Employs the highest quality encoding presets to preserve flawless visual fidelity. Transcoding takes a little longer, but guarantees pristine visuals while minimizing background playback resources.
 
 ## 🛠️ Installation & Requirements
 Requires `ffmpeg` compiled with NVENC (NVIDIA GPU encoding) support.

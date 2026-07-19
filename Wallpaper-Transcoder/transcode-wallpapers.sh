@@ -78,17 +78,23 @@ for f in "$DIR"/*.gif; do
     success=0
 
     # Pass 1: generate optimal palette
-    if "$FFMPEG" -y -i "$f" \
+    "$FFMPEG" -y -i "$f" \
         -vf "palettegen=max_colors=256:stats_mode=diff" \
-        "$palette_tmp" 2>/dev/null; then
+        -hide_banner -loglevel error -stats \
+        "$palette_tmp"
+    echo ""
+    if [ $? -eq 0 ]; then
 
         # Pass 2: encode with palette (perfect color accuracy)
-        if "$FFMPEG" -y -i "$f" -i "$palette_tmp" \
+        "$FFMPEG" -y -i "$f" -i "$palette_tmp" \
             -lavfi "paletteuse=dither=bayer:bayer_scale=5" \
             -c:v libx264 -preset fast -crf 15 \
             -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" \
             -movflags +faststart -an \
-            "$tmp_out" 2>/dev/null && [ -s "$tmp_out" ]; then
+            -hide_banner -loglevel error -stats \
+            "$tmp_out"
+        echo ""
+        if [ $? -eq 0 ] && [ -s "$tmp_out" ]; then
             success=1
         fi
         rm -f "$palette_tmp"
@@ -97,11 +103,14 @@ for f in "$DIR"/*.gif; do
     # Fallback: direct GIF → MP4 (slightly less accurate colors)
     if [ "$success" -eq 0 ]; then
         rm -f "$tmp_out" "$palette_tmp"
-        if "$FFMPEG" -y -i "$f" \
+        "$FFMPEG" -y -i "$f" \
             -c:v libx264 -preset fast -crf 15 \
             -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" \
             -movflags +faststart -an \
-            "$tmp_out" 2>/dev/null && [ -s "$tmp_out" ]; then
+            -hide_banner -loglevel error -stats \
+            "$tmp_out"
+        echo ""
+        if [ $? -eq 0 ] && [ -s "$tmp_out" ]; then
             success=1
         fi
     fi
@@ -166,30 +175,29 @@ for f in "$DIR"/*.mp4 "$DIR"/*.webm "$DIR"/*.mkv; do
         fps=$fps_str
     fi
 
+    # Calculate output size maintaining aspect ratio (scaling up or down)
+    if [ $(( width * SCREEN_H )) -gt $(( height * SCREEN_W )) ]; then
+        # Width is the limiting factor
+        new_w=$SCREEN_W
+        new_h=$(( height * SCREEN_W / width ))
+        new_h=$(( (new_h + 1) / 2 * 2 ))
+    else
+        # Height is the limiting factor
+        new_h=$SCREEN_H
+        new_w=$(( width * SCREEN_H / height ))
+        new_w=$(( (new_w + 1) / 2 * 2 ))
+    fi
+
     # Decide if transcoding is needed
     needs_resize=0
     needs_fps_cap=0
-    [ "$width" -gt "$SCREEN_W" ] || [ "$height" -gt "$SCREEN_H" ] && needs_resize=1
+    [ "$new_w" -ne "$width" ] || [ "$new_h" -ne "$height" ] && needs_resize=1
     [ "$fps" -gt "$TARGET_FPS" ] && needs_fps_cap=1
 
     if [ "$needs_resize" -eq 0 ] && [ "$needs_fps_cap" -eq 0 ]; then
         echo "  ✓ OK  (${width}x${height} @ ${fps}fps): $(basename "$f")"
         skipped_video=$((skipped_video + 1))
         continue
-    fi
-
-    # Calculate output size maintaining aspect ratio
-    new_w=$width
-    new_h=$height
-    if [ "$new_w" -gt "$SCREEN_W" ]; then
-        new_h=$(( height * SCREEN_W / width ))
-        new_h=$(( (new_h + 1) / 2 * 2 ))
-        new_w=$SCREEN_W
-    fi
-    if [ "$new_h" -gt "$SCREEN_H" ]; then
-        new_w=$(( width * SCREEN_H / height ))
-        new_w=$(( (new_w + 1) / 2 * 2 ))
-        new_h=$SCREEN_H
     fi
 
     reason=""
@@ -204,15 +212,18 @@ for f in "$DIR"/*.mp4 "$DIR"/*.webm "$DIR"/*.mkv; do
     success=0
 
     # ── PATH A: Full GPU pipeline ─────────────────────────────────────────────
-    if "$FFMPEG" -y \
+    "$FFMPEG" -y \
         -hwaccel cuda \
         -hwaccel_output_format cuda \
         -i "$f" \
         -vf "scale_cuda=${new_w}:${new_h}:format=yuv420p" \
         -r $TARGET_FPS \
-        -c:v h264_nvenc -preset p4 -cq 20 -b:v 0 \
+        -c:v h264_nvenc -preset p7 -cq 15 -b:v 0 \
         -an -movflags +faststart \
-        "$out" 2>/dev/null && [ -s "$out" ]; then
+        -hide_banner -loglevel error -stats \
+        "$out"
+    echo ""
+    if [ $? -eq 0 ] && [ -s "$out" ]; then
         success=1
         echo "     (GPU pipeline: CUDA decode + NVENC encode)"
     fi
@@ -221,13 +232,16 @@ for f in "$DIR"/*.mp4 "$DIR"/*.webm "$DIR"/*.mkv; do
     if [ "$success" -eq 0 ]; then
         echo "     ↳ GPU pipeline failed → CPU decode + NVENC fallback..."
         rm -f "$out"
-        if "$FFMPEG" -y \
+        "$FFMPEG" -y \
             -i "$f" \
             -vf "scale=${new_w}:${new_h}:flags=lanczos" \
             -r $TARGET_FPS \
-            -c:v h264_nvenc -preset p4 -cq 20 -b:v 0 \
+            -c:v h264_nvenc -preset p7 -cq 15 -b:v 0 \
             -an -movflags +faststart \
-            "$out" 2>/dev/null && [ -s "$out" ]; then
+            -hide_banner -loglevel error -stats \
+            "$out"
+        echo ""
+        if [ $? -eq 0 ] && [ -s "$out" ]; then
             success=1
             echo "     (CPU decode + NVENC encode)"
         fi
@@ -237,13 +251,16 @@ for f in "$DIR"/*.mp4 "$DIR"/*.webm "$DIR"/*.mkv; do
     if [ "$success" -eq 0 ]; then
         echo "     ↳ NVENC failed → pure software fallback (slow but reliable)..."
         rm -f "$out"
-        if "$FFMPEG" -y \
+        "$FFMPEG" -y \
             -i "$f" \
             -vf "scale=${new_w}:${new_h}:flags=lanczos" \
             -r $TARGET_FPS \
-            -c:v libx264 -preset medium -crf 20 \
+            -c:v libx264 -preset slow -crf 16 \
             -an -movflags +faststart \
-            "$out" 2>/dev/null && [ -s "$out" ]; then
+            -hide_banner -loglevel error -stats \
+            "$out"
+        echo ""
+        if [ $? -eq 0 ] && [ -s "$out" ]; then
             success=1
             echo "     (software encode: libx264)"
         fi
