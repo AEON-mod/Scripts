@@ -16,6 +16,21 @@ This Universal Installer completely automates the process:
 
 ## 🛠️ Installation & Requirements
 Requires Python and `win2xcur` for processing Windows themes. Native Linux themes require no dependencies.
+
+Debian / Ubuntu
+```bash
+sudo apt update && sudo apt install -y python3 python3-pip
+```
+Fedora
+```bash
+sudo dnf install -y python3 python3-pip
+```
+Arch Linux
+```bash
+sudo pacman -S --noconfirm python python-pip
+```
+
+Then install the required Python package:
 ```bash
 pip install win2xcur
 ```

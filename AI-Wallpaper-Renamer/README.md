@@ -13,12 +13,28 @@ This script uses the **BLIP** (Bootstrapping Language-Image Pre-training) Vision
 ### ✨ Key Features
 - **AI Vision Analysis**: Runs the BLIP base model locally to generate a caption for the image contents.
 - **Aesthetic Text Filtering**: Cleans the AI output by removing stop words and substituting generic terms (e.g., replaces "woman"/"man" with "girl"/"boy" for a stylized naming convention).
-- **Format Normalization**: Standardizes your wallpaper directory by converting various formats (`.png`, `.webp`, `.bmp`) to high-quality `JPEG` (95% quality).
-- **Collision Protection**: Automatically prevents overwrites by appending numerical counters (`_01`, `_02`) to images that end up with the same generated name.
+- **Live Wallpaper & GIF Support**: Fully supports video wallpapers (`.mp4`, `.webm`, etc.) and animated `.gif` files by safely extracting frames for captioning while preserving the original animation format.
+- **Format Normalization**: Standardizes static image wallpapers by converting various formats (`.png`, `.webp`, `.bmp`) to high-quality `JPEG` (95% quality).
+- **Collision Protection**: Automatically prevents overwrites by appending numerical counters (`_01`, `_02`) to files that end up with the same generated name.
 - **Recursive Scanning**: Process nested directories and subfolders with ease.
 
 ## 🛠️ Installation & Requirements
-Requires Python 3, PyTorch, Transformers, and Pillow. An NVIDIA GPU (CUDA) is highly recommended for reasonable processing speeds.
+Requires Python 3, `ffmpeg` (for live wallpaper support), PyTorch, Transformers, and Pillow. An NVIDIA GPU (CUDA) is highly recommended for reasonable processing speeds.
+
+Debian / Ubuntu
+```bash
+sudo apt update && sudo apt install -y python3 python3-pip ffmpeg
+```
+Fedora
+```bash
+sudo dnf install -y python3 python3-pip ffmpeg
+```
+Arch Linux
+```bash
+sudo pacman -S --noconfirm python python-pip ffmpeg
+```
+
+Then install the Python dependencies:
 ```bash
 pip install torch transformers pillow
 ```
