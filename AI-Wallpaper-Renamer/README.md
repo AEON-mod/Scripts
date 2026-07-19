@@ -21,15 +21,15 @@ This script uses the **BLIP** (Bootstrapping Language-Image Pre-training) Vision
 ## 🛠️ Installation & Requirements
 Requires Python 3, `ffmpeg` (for live wallpaper support), PyTorch, Transformers, and Pillow. An NVIDIA GPU (CUDA) is highly recommended for reasonable processing speeds.
 
-Debian / Ubuntu
+<img src="https://cdn.simpleicons.org/debian/A81D33" width="16" /> Debian / <img src="https://cdn.simpleicons.org/ubuntu/E95420" width="16" /> Ubuntu
 ```bash
 sudo apt update && sudo apt install -y python3 python3-pip ffmpeg
 ```
-Fedora
+<img src="https://cdn.simpleicons.org/fedora/51A2DA" width="16" /> Fedora
 ```bash
 sudo dnf install -y python3 python3-pip ffmpeg
 ```
-Arch Linux
+<img src="https://cdn.simpleicons.org/archlinux/1793D1" width="16" /> Arch Linux
 ```bash
 sudo pacman -S --noconfirm python python-pip ffmpeg
 ```

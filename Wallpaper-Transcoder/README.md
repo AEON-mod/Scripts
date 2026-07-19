@@ -18,15 +18,15 @@ This script elegantly solves that problem by:
 ## 🛠️ Installation & Requirements
 Requires `ffmpeg` compiled with NVENC (NVIDIA GPU encoding) support.
 
-Debian / Ubuntu
+<img src="https://cdn.simpleicons.org/debian/A81D33" width="16" /> Debian / <img src="https://cdn.simpleicons.org/ubuntu/E95420" width="16" /> Ubuntu
 ```bash
 sudo apt update && sudo apt install -y ffmpeg
 ```
-Fedora
+<img src="https://cdn.simpleicons.org/fedora/51A2DA" width="16" /> Fedora
 ```bash
 sudo dnf install -y ffmpeg
 ```
-Arch Linux
+<img src="https://cdn.simpleicons.org/archlinux/1793D1" width="16" /> Arch Linux
 ```bash
 sudo pacman -S --noconfirm ffmpeg
 ```

@@ -17,15 +17,15 @@ This Universal Installer completely automates the process:
 ## 🛠️ Installation & Requirements
 Requires Python and `win2xcur` for processing Windows themes. Native Linux themes require no dependencies.
 
-Debian / Ubuntu
+<img src="https://cdn.simpleicons.org/debian/A81D33" width="16" /> Debian / <img src="https://cdn.simpleicons.org/ubuntu/E95420" width="16" /> Ubuntu
 ```bash
 sudo apt update && sudo apt install -y python3 python3-pip
 ```
-Fedora
+<img src="https://cdn.simpleicons.org/fedora/51A2DA" width="16" /> Fedora
 ```bash
 sudo dnf install -y python3 python3-pip
 ```
-Arch Linux
+<img src="https://cdn.simpleicons.org/archlinux/1793D1" width="16" /> Arch Linux
 ```bash
 sudo pacman -S --noconfirm python python-pip
 ```
