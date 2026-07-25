@@ -1,13 +1,4 @@
-#!/bin/bash
 # transcode-wallpapers.sh
-# Transcodes high-res / high-fps wallpaper videos to 1080p @ 30fps using GPU (NVENC).
-# Also converts GIF files to MP4 so they work correctly with mpvpaper.
-#
-# WHY:
-#   RTX 4050 Laptop + 1080p screen — playing 4K is 4x wasted decode work.
-#   30fps cap: wallpaper doesn't need 60fps, and 60fps = 2x the memory bandwidth.
-#   GIFs: mpvpaper cannot loop GIFs properly (shows static) — MP4 conversion fixes this.
-#
 # APPROACH:
 #   Videos: NVENC hardware encoding, two decode paths:
 #     Path A: hwaccel cuda + scale_cuda + h264_nvenc — full GPU pipeline
