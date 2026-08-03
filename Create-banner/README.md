@@ -3,7 +3,9 @@
   <p><i>A beautifully automated tool to generate rotated, tiled collage banners from your image collections.</i></p>
 
   ![Static Banner](Assets/banner.png)
-  <br><br>
+  <br>
+  <p align="center">━━━━━━━ ❖ ━━━━━━━</p>
+  <br>
   ![Animated Banner](Assets/banner.gif)
   <br>
   
