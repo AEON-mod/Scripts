@@ -3,8 +3,19 @@
   <p><i>A beautifully automated tool to generate rotated, tiled collage banners from your image collections.</i></p>
 
   ![Static Banner](Assets/banner.png)
-  <br><br>
-  ![Animated Banner](Assets/banner.gif)
+  <p align="center"><i>High-resolution static layout generated in seconds</i></p>
+
+  <br>
+  
+  <details>
+    <summary><b>✨ View Animated GIF Preview</b></summary>
+    <br>
+    <p align="center">
+      <img src="Assets/banner.gif" alt="Animated Banner">
+    </p>
+    <p align="center"><i>Smooth, continuous infinite scroll animation</i></p>
+  </details>
+
   <br>
   
   [![Python Version](https://img.shields.io/badge/python-3.x-blue.svg?logo=python&logoColor=white)](#)
