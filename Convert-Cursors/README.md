@@ -45,6 +45,34 @@ bash convert_cursors.sh /path/to/theme/folder
 bash convert_cursors.sh
 ```
 
+## 🎨 Setting Cursors (Hyprland / GTK)
+
+Included in this repository is `set-cursor`, a convenient script to easily apply your installed cursor themes globally across Hyprland and GTK apps.
+
+### Setup
+1. Make the script executable and move it to your local bin directory (ensure `~/.local/bin` is in your `$PATH`):
+   ```bash
+   chmod +x set-cursor
+   cp set-cursor ~/.local/bin/
+   ```
+2. (Optional) Install `fzf` for an interactive, search-based theme picker.
+
+### Usage
+Run the script to change your cursor theme and size. It updates Hyprland, GTK2/3/4, and GNOME settings automatically.
+```bash
+# Interactive picker (requires fzf)
+set-cursor
+
+# Set theme manually (keeps current size)
+set-cursor <ThemeName>
+
+# Set theme and size
+set-cursor <ThemeName> 24
+
+# List available themes
+set-cursor --list
+```
+
 ## 🐛 Troubleshoot
 - **`win2xcur not found`**: Ensure that your Python `pip` binary path (usually `~/.local/bin`) is included in your system's `$PATH`.
 - **Cursors not applying**: After installation, make sure to restart your compositor or set the theme explicitly. For example, in Hyprland:
