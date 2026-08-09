@@ -50,7 +50,7 @@ Contributions, issues, and feature requests are always welcome! Feel free to che
 
 These scripts are provided "as is", without warranty of any kind. I built them for personal use, but they are released as open-source under the **MIT License**. You are completely free to use, modify, and distribute them. 
 
-See the [LICENSE](LICENSE) file for more details.
+See the [LICENSE](https://github.com/AEON-mod/Scripts/blob/main/LICENSE) file for more details.
 
 ---
 
