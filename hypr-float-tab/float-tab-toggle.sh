@@ -16,15 +16,28 @@ WIN=$(hyprctl activewindow -j 2>/dev/null)
 IS_FLOATING=$(echo "$WIN" | python3 -c "import sys,json;w=json.load(sys.stdin);print(str(w.get('floating',False)).lower())")
 IS_PINNED=$(echo   "$WIN" | python3 -c "import sys,json;w=json.load(sys.stdin);print(str(w.get('pinned',False)).lower())")
 ADDRESS=$(echo     "$WIN" | python3 -c "import sys,json;w=json.load(sys.stdin);print(w.get('address',''))")
+WORKSPACE=$(echo   "$WIN" | python3 -c "import sys,json;w=json.load(sys.stdin);print(w.get('workspace',{}).get('name',''))")
+
+STATE_FILE="/tmp/hypr-float-tab-${ADDRESS}.ws"
 
 # ── Toggle OFF: already floating + pinned → restore to tiled ─────
 if [[ "$IS_FLOATING" == "true" && "$IS_PINNED" == "true" ]]; then
     hyprctl eval "hl.dispatch(hl.dsp.window.pin({   action = \"off\", window = \"address:${ADDRESS}\" }))" -q
     hyprctl eval "hl.dispatch(hl.dsp.window.float({ action = \"off\", window = \"address:${ADDRESS}\" }))" -q
+    
+    if [[ -f "$STATE_FILE" ]]; then
+        ORIG_WS=$(cat "$STATE_FILE")
+        if [[ -n "$ORIG_WS" ]]; then
+            hyprctl dispatch movetoworkspacesilent "$ORIG_WS,address:${ADDRESS}"
+        fi
+        rm -f "$STATE_FILE"
+    fi
     exit 0
 fi
 
 # ── Toggle ON: enter float-tab mode ──────────────────────────────
+# Save the current workspace to return to it later
+echo "$WORKSPACE" > "$STATE_FILE"
 
 # Get monitor logical size (respects HiDPI scale)
 read -r MON_W MON_H < <(hyprctl monitors -j | python3 -c "
