@@ -23,8 +23,8 @@
 
 ```bash
 # 1. Clone the repo
-git clone https://github.com/AEON-mod/TouchpadSwitch.git
-cd TouchpadSwitch/macos
+git clone https://github.com/AEON-mod/Scripts.git
+cd Touchpad-toggle/macos
 
 # 2. Install the script
 mkdir -p ~/.local/bin
