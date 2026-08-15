@@ -69,44 +69,50 @@ chmod +x ~/.config/hypr/scripts/float-tab-toggle.sh
 
 ### 2 — Bind the keybind
 
-**Lua config** (`keybinds.lua`)
+**Lua config** (`~/.config/hypr/keybinds.lua`)
 ```lua
 hl.bind("SUPER + SHIFT + F", hl.dsp.exec_cmd("~/.config/hypr/scripts/float-tab-toggle.sh"))
+hl.bind("SUPER + mouse:272", hl.dsp.window.drag(), { mouse = true })    -- move window
+hl.bind("SUPER + mouse:273", hl.dsp.window.resize(), { mouse = true })  -- resize window (diagonal)
 ```
 
-**Legacy config** (`keybinds.conf`)
+**Legacy config** (`~/.config/hypr/keybinds.conf`)
 ```ini
 bind = Super+Shift, F, exec, ~/.config/hypr/scripts/float-tab-toggle.sh
+bindm = Super, mouse:272, movewindow    # move window
+bindm = Super, mouse:273, resizewindow  # resize window (diagonal)
 ```
 
 ### 3 — Enable smooth border resize
 
-**Lua** (`general.lua`)
+**Lua** (`~/.config/hypr/general.lua`)
 ```lua
 general = {
     resize_on_border        = true,   -- drag any border edge to resize
-    extend_border_grab_area = 10,     -- wider invisible grab zone
+    extend_border_grab_area = 15,     -- wider invisible grab zone
+    hover_icon_on_border    = true,   -- show resize cursor on hover
 }
 ```
 
-**Legacy** (`general.conf`)
+**Legacy** (`~/.config/hypr/general.conf`)
 ```ini
 general {
     resize_on_border        = true
-    extend_border_grab_area = 10
+    extend_border_grab_area = 15
+    hover_icon_on_border    = true
 }
 ```
 
 ### 4 — Eliminate content-refresh lag during resize
 
-**Lua** (`misc.lua`)
+**Lua** (`~/.config/hypr/misc.lua`)
 ```lua
 misc = {
     animate_manual_resizes = true,
 }
 ```
 
-**Legacy** (`misc.conf`)
+**Legacy** (`~/.config/hypr/misc.conf`)
 ```ini
 misc {
     animate_manual_resizes = true
@@ -154,3 +160,4 @@ The script auto-detects your monitor's logical resolution and HiDPI scale, so th
 ## License
 
 MIT — do whatever you want with it.
+Note- it is especially made for caelestia users

@@ -104,11 +104,12 @@ if $USE_LUA; then
         ok "resize_on_border already in general.lua (ensured true)"
     else
         # Append inside the general block — safest is to append before the closing })
-        sed -i '/^}\s*$/{i\        resize_on_border        = true,   -- drag border to resize (no modifier)\n        extend_border_grab_area = 10,     -- wider invisible grab zone
+        sed -i '/^}\s*$/{i\        resize_on_border        = true,   -- drag border to resize (no modifier)\n        extend_border_grab_area = 15,     -- wider invisible grab zone\n        hover_icon_on_border    = true,   -- show resize cursor on hover
         }' "$GEN_FILE" 2>/dev/null || {
             warn "Could not auto-patch general.lua — add manually:"
             warn "  resize_on_border        = true"
-            warn "  extend_border_grab_area = 10"
+            warn "  extend_border_grab_area = 15"
+            warn "  hover_icon_on_border    = true"
         }
     fi
 else
@@ -118,7 +119,8 @@ else
         ok "resize_on_border already in general.conf (ensured true)"
     else
         patch_file "$GEN_FILE" "resize_on_border" "    resize_on_border = true"
-        patch_file "$GEN_FILE" "extend_border_grab_area" "    extend_border_grab_area = 10"
+        patch_file "$GEN_FILE" "extend_border_grab_area" "    extend_border_grab_area = 15"
+        patch_file "$GEN_FILE" "hover_icon_on_border" "    hover_icon_on_border = true"
     fi
 fi
 
@@ -143,18 +145,21 @@ else
     fi
 fi
 
-# ── Step 5: Verify Super+LMB movewindow bind exists ─────────────────────────
-step "Checking Super + Left Click move bind"
+# ── Step 5: Verify Super+LMB move / Super+RMB resize binds exist ─────────────
+step "Checking Super + Mouse binds (move & resize)"
 
 MOVE_OK=false
+RESIZE_OK=false
 if $USE_LUA; then
     grep -q "mouse:272.*drag\|movewindow\|window.drag" "${HYPRLAND_DIR}/keybinds.lua" 2>/dev/null && MOVE_OK=true
+    grep -q "mouse:273.*resize\|resizewindow\|window.resize" "${HYPRLAND_DIR}/keybinds.lua" 2>/dev/null && RESIZE_OK=true
 else
     grep -q "mouse:272.*movewindow\|movewindow.*mouse:272" "${HYPRLAND_DIR}/keybinds.conf" 2>/dev/null && MOVE_OK=true
+    grep -q "mouse:273.*resizewindow\|resizewindow.*mouse:273" "${HYPRLAND_DIR}/keybinds.conf" 2>/dev/null && RESIZE_OK=true
 fi
 
 if $MOVE_OK; then
-    ok "Super + Left Click move bind already present — nothing to do"
+    ok "Super + Left Click move bind already present"
 else
     warn "Super + LMB move bind not found — adding it"
     if $USE_LUA; then
@@ -165,6 +170,20 @@ else
             >> "${HYPRLAND_DIR}/keybinds.conf"
     fi
     ok "Added Super + Left Click move bind"
+fi
+
+if $RESIZE_OK; then
+    ok "Super + Right Click resize bind already present"
+else
+    warn "Super + RMB resize bind not found — adding it"
+    if $USE_LUA; then
+        echo 'hl.bind("SUPER + mouse:273", hl.dsp.window.resize(), { mouse = true })  -- resize floating window (diagonal)' \
+            >> "${HYPRLAND_DIR}/keybinds.lua"
+    else
+        echo 'bindm = Super, mouse:273, resizewindow  # resize floating window (diagonal)' \
+            >> "${HYPRLAND_DIR}/keybinds.conf"
+    fi
+    ok "Added Super + Right Click resize bind"
 fi
 
 # ── Step 6: Reload Hyprland ───────────────────────────────────────────────────
