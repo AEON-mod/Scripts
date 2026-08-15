@@ -160,4 +160,5 @@ The script auto-detects your monitor's logical resolution and HiDPI scale, so th
 ## License
 
 MIT — do whatever you want with it.
+
 Note- it is especially made for caelestia users
