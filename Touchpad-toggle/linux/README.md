@@ -29,8 +29,8 @@ Optional: `notify-send` for desktop notifications.
 ## 🚀 Install
 
 ```bash
-git clone https://github.com/AEON-mod/TouchpadSwitch.git
-cd TouchpadSwitch/linux
+git clone https://github.com/AEON-mod/Scripts.git
+cd Touchpad-toggle/linux
 chmod +x install.sh touchpad-toggle.sh
 ./install.sh
 ```
