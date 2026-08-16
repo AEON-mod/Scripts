@@ -149,18 +149,18 @@ install_windows_theme() {
         fi
 
         # Convert via win2xcur into a temp dir, then copy
-        # win2xcur names output files by their X11 name, not the original stem
+        # win2xcur names output files after the original input stem (e.g. Normal → Normal)
         local tmp_dir
         tmp_dir="$(mktemp -d)"
         if win2xcur -o "$tmp_dir" "$src" &>/dev/null; then
-            local converted="$tmp_dir/$x11_name"
+            local converted="$tmp_dir/$stem"
             if [[ -f "$converted" ]]; then
                 cp "$converted" "$cursors_dir/$x11_name"
                 log_ok "$stem → $x11_name"
                 make_symlinks "$cursors_dir" "$x11_name"
                 ok=$(( ok + 1 ))
             else
-                log_err "$stem — win2xcur produced no output (looked for: $x11_name)"
+                log_err "$stem — win2xcur produced no output (looked for: $stem)"
                 fail=$(( fail + 1 ))
             fi
         else
@@ -225,6 +225,15 @@ process_theme() {
         install_x11_theme "$theme_name" "$src/cursors"
         return 0
     fi
+
+    # ── Case 1b: Has a platform subfolder containing cursors/ (e.g. Linux/cursors/) ──
+    for platform_sub in "$src"/Linux "$src"/linux "$src"/X11 "$src"/x11; do
+        if [[ -d "$platform_sub/cursors" ]]; then
+            log_info "Detected: native X11 theme (platform subfolder: $(basename "$platform_sub"))"
+            install_x11_theme "$theme_name" "$platform_sub/cursors"
+            return 0
+        fi
+    done
 
     # ── Case 2: .ani/.cur directly in the root folder (check before subfolder) ──
     if ls "$src"/*.ani &>/dev/null 2>&1 || ls "$src"/*.cur &>/dev/null 2>&1 \
