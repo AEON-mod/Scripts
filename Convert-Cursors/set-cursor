@@ -48,8 +48,11 @@ fi
 if [[ -n "${2:-}" ]]; then
     SIZE="$2"
 else
-    # Keep current size from variables.conf
-    SIZE=$(grep '^\$cursorSize' "$VARS" | head -1 | sed 's/.*= *//')
+    # Try reading from variables.conf first, then variables.lua, then default
+    SIZE=$(grep '^\$cursorSize' "$VARS" 2>/dev/null | head -1 | sed 's/.*= *//')
+    if [[ -z "$SIZE" && -f "$VARS_LUA" ]]; then
+        SIZE=$(grep -E '^\s*cursorSize\s*=' "$VARS_LUA" | head -1 | sed -E 's/.*=\s*([0-9]+).*/\1/')
+    fi
     SIZE="${SIZE:-24}"
 fi
 
@@ -64,27 +67,39 @@ if [[ -f "$VARS_LUA" ]]; then
 fi
 
 # ── 2. Apply live (Hyprland + XCursor env) ───────────────────────────────────
-hyprctl setcursor "$THEME" "$SIZE" &>/dev/null
+if ! hyprctl setcursor "$THEME" "$SIZE" &>/dev/null; then
+    echo "⚠  hyprctl setcursor failed — is Hyprland running?"
+fi
+
+# Helper: set or append a key=value in an ini-style file
+_set_ini_key() {
+    local file="$1" key="$2" value="$3"
+    if grep -q "^${key}=" "$file" 2>/dev/null; then
+        sed -i "s|^${key}=.*|${key}=${value}|" "$file"
+    else
+        echo "${key}=${value}" >> "$file"
+    fi
+}
 
 # ── 3. Sync GTK2 ─────────────────────────────────────────────────────────────
 GTK2="$HOME/.gtkrc-2.0"
 if [[ -f "$GTK2" ]]; then
-    sed -i "s|^gtk-cursor-theme-name=.*|gtk-cursor-theme-name=\"$THEME\"|" "$GTK2"
-    sed -i "s|^gtk-cursor-theme-size=.*|gtk-cursor-theme-size=$SIZE|"      "$GTK2"
+    _set_ini_key "$GTK2" "gtk-cursor-theme-name" "\"$THEME\""
+    _set_ini_key "$GTK2" "gtk-cursor-theme-size" "$SIZE"
 fi
 
 # ── 4. Sync GTK3 ─────────────────────────────────────────────────────────────
 GTK3="$HOME/.config/gtk-3.0/settings.ini"
 if [[ -f "$GTK3" ]]; then
-    sed -i "s|^gtk-cursor-theme-name=.*|gtk-cursor-theme-name=$THEME|" "$GTK3"
-    sed -i "s|^gtk-cursor-theme-size=.*|gtk-cursor-theme-size=$SIZE|"  "$GTK3"
+    _set_ini_key "$GTK3" "gtk-cursor-theme-name" "$THEME"
+    _set_ini_key "$GTK3" "gtk-cursor-theme-size" "$SIZE"
 fi
 
 # ── 5. Sync GTK4 ─────────────────────────────────────────────────────────────
 GTK4="$HOME/.config/gtk-4.0/settings.ini"
 if [[ -f "$GTK4" ]]; then
-    sed -i "s|^gtk-cursor-theme-name=.*|gtk-cursor-theme-name=$THEME|" "$GTK4"
-    sed -i "s|^gtk-cursor-theme-size=.*|gtk-cursor-theme-size=$SIZE|"  "$GTK4"
+    _set_ini_key "$GTK4" "gtk-cursor-theme-name" "$THEME"
+    _set_ini_key "$GTK4" "gtk-cursor-theme-size" "$SIZE"
 fi
 
 # ── 6. Sync gsettings (GNOME/GTK portal) ─────────────────────────────────────
@@ -100,6 +115,14 @@ cat > "$XCURSOR_DIR/index.theme" <<EOF
 [Icon Theme]
 Inherits=$THEME
 EOF
+
+# Reload xrdb so X11 apps pick up the new cursor immediately
+if command -v xrdb &>/dev/null; then
+    {
+        echo "Xcursor.theme: $THEME"
+        echo "Xcursor.size:  $SIZE"
+    } | xrdb -merge &>/dev/null
+fi
 
 echo "✓ Done! Theme: $THEME  Size: $SIZE"
 echo "  (Hyprland applied live — GTK apps may need restart)"

@@ -144,27 +144,28 @@ install_windows_theme() {
         local x11_name="${WIN_MAP[$stem]:-}"
         if [[ -z "$x11_name" ]]; then
             log_warn "$stem — no mapping found, skipping"
-            (( skip++ )) || true
+            skip=$(( skip + 1 ))
             continue
         fi
 
         # Convert via win2xcur into a temp dir, then copy
+        # win2xcur names output files by their X11 name, not the original stem
         local tmp_dir
         tmp_dir="$(mktemp -d)"
         if win2xcur -o "$tmp_dir" "$src" &>/dev/null; then
-            local converted="$tmp_dir/$stem"
+            local converted="$tmp_dir/$x11_name"
             if [[ -f "$converted" ]]; then
                 cp "$converted" "$cursors_dir/$x11_name"
                 log_ok "$stem → $x11_name"
                 make_symlinks "$cursors_dir" "$x11_name"
-                (( ok++ )) || true
+                ok=$(( ok + 1 ))
             else
-                log_err "$stem — win2xcur produced no output"
-                (( fail++ )) || true
+                log_err "$stem — win2xcur produced no output (looked for: $x11_name)"
+                fail=$(( fail + 1 ))
             fi
         else
             log_err "$stem — win2xcur conversion failed"
-            (( fail++ )) || true
+            fail=$(( fail + 1 ))
         fi
         rm -rf "$tmp_dir"
     done
@@ -185,12 +186,16 @@ install_x11_theme() {
     mkdir -p "$cursors_dir"
     write_theme_meta "$dest" "$theme_name"
 
-    # Copy all cursor files
+    # Copy all cursor files and symlinks
     local count=0
     for f in "$src_cursors_dir"/*; do
-        [[ -f "$f" && ! -L "$f" ]] || continue
-        cp "$f" "$cursors_dir/"
-        (( count++ )) || true
+        [[ -e "$f" || -L "$f" ]] || continue  # -e misses broken symlinks, -L catches all symlinks
+        if [[ -L "$f" ]]; then
+            cp -P "$f" "$cursors_dir/"   # -P preserves symlink as-is
+        else
+            cp "$f" "$cursors_dir/"
+        fi
+        count=$(( count + 1 ))
     done
 
     # Add any missing standard aliases
@@ -269,19 +274,28 @@ mkdir -p "$ICONS_DIR"
 
 echo -e "\n${BLD}${CYN}═══ Universal Cursor Theme Installer ═══${RST}"
 
-if [[ $# -gt 0 ]]; then
+if [[ "${1:-}" == "--patch" ]]; then
+    # Patch all already-installed themes with missing aliases
+    shift
+    if [[ $# -gt 0 ]]; then
+        for arg in "$@"; do patch_installed "$(basename "$arg")"; done
+    else
+        for theme_dir in "$ICONS_DIR"/*/; do
+            [[ -d "$theme_dir/cursors" ]] && patch_installed "$(basename "$theme_dir")"
+        done
+    fi
+elif [[ $# -gt 0 ]]; then
     # Specific path(s) passed as arguments
     for arg in "$@"; do
         process_theme "$arg"
     done
 else
     # Scan all subdirectories next to this script
-    # (skip: the script itself and any already-installed themes in ICONS_DIR)
     found=0
     for dir in "$SCRIPT_DIR"/*/; do
         [[ -d "$dir" ]] || continue
         process_theme "$dir"
-        (( found++ )) || true
+        found=$(( found + 1 ))
     done
     [[ $found -eq 0 ]] && echo -e "\n${YLW}No theme folders found next to this script.${RST}"
 fi
