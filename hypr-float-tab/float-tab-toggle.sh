@@ -29,6 +29,14 @@ if [[ "$IS_FLOATING" == "true" && "$IS_PINNED" == "true" ]]; then
         ORIG_WS=$(cat "$STATE_FILE")
         if [[ -n "$ORIG_WS" ]]; then
             hyprctl eval "hl.dispatch(hl.dsp.window.move({ workspace = \"${ORIG_WS}\", silent = true, window = \"address:${ADDRESS}\" }))" -q
+            
+            # If returning to a special workspace, auto-open it so the window doesn't vanish
+            if [[ "$ORIG_WS" == special:* ]]; then
+                CURRENT_SPECIAL=$(hyprctl monitors -j | python3 -c "import sys,json; print(next((m.get('specialWorkspace', {}).get('name') for m in json.load(sys.stdin) if m.get('focused')), ''))")
+                if [[ "$CURRENT_SPECIAL" != "$ORIG_WS" ]]; then
+                    hyprctl dispatch togglespecialworkspace "${ORIG_WS#special:}"
+                fi
+            fi
         fi
         rm -f "$STATE_FILE"
     fi
@@ -62,3 +70,13 @@ hyprctl eval "
     hl.dispatch(hl.dsp.window.center({ window = \"address:${ADDRESS}\" }))
     hl.dispatch(hl.dsp.window.pin({   action = \"on\",  window = \"address:${ADDRESS}\" }))
 " -q
+
+# Auto-close special workspace if it is now empty (has no unpinned windows)
+if [[ "$WORKSPACE" == special:* ]]; then
+    # Wait briefly for Hyprland to process the pin
+    sleep 0.1
+    WS_WINDOWS=$(hyprctl clients -j | python3 -c "import sys,json; print(sum(1 for c in json.load(sys.stdin) if c.get('workspace',{}).get('name') == '$WORKSPACE' and not c.get('pinned', False)))")
+    if [[ "$WS_WINDOWS" -eq 0 ]]; then
+        hyprctl dispatch togglespecialworkspace "${WORKSPACE#special:}"
+    fi
+fi
