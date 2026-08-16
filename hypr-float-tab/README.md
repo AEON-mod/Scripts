@@ -26,6 +26,7 @@ One keybind. Zero friction.
 - **Freely movable** with `Super + Left Click`
 - **Resizable** by dragging any border edge (no modifier key needed)
 - Press the keybind again → snaps back to your tiling layout
+- **Special workspace aware** — auto-closes special workspaces if they become empty when floating, and auto-opens them when returning a window so you never lose track of it.
 
 > [!NOTE]
 > Supports both **Hyprland Lua config** (≥ 0.45) and the **legacy `.conf`** format.
