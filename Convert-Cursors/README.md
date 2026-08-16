@@ -75,6 +75,12 @@ set-cursor <ThemeName> 24
 
 # List available themes
 set-cursor --list
+
+# Uninstall a theme — interactive picker
+set-cursor --uninstall
+
+# Uninstall a specific theme directly
+set-cursor --uninstall <ThemeName>
 ```
 
 ## 🐛 Troubleshoot

@@ -6,6 +6,8 @@
 #   set-cursor <ThemeName>                 # set theme, keep current size
 #   set-cursor <ThemeName> <Size>          # set theme and size
 #   set-cursor --list                      # list available themes
+#   set-cursor --uninstall                 # pick and uninstall a theme (fzf)
+#   set-cursor --uninstall <ThemeName>     # uninstall a specific theme
 
 VARS="$HOME/.config/hypr/variables.conf"
 VARS_LUA="$HOME/.config/hypr/variables.lua"
@@ -23,6 +25,36 @@ if [[ "${1:-}" == "--list" ]]; then
     list_themes | sed 's/^/  /'
     exit 0
 fi
+
+# ── Uninstall ─────────────────────────────────────────────────────────────────
+if [[ "${1:-}" == "--uninstall" ]]; then
+    if [[ -n "${2:-}" ]]; then
+        DEL_THEME="$2"
+    else
+        if command -v fzf &>/dev/null; then
+            DEL_THEME=$(list_themes | fzf --prompt="Uninstall theme: " --height=15 --reverse)
+        else
+            echo "Available themes:"
+            list_themes | nl -ba | sed 's/^/  /'
+            echo -n "Pick number to uninstall: "
+            read -r num
+            DEL_THEME=$(list_themes | sed -n "${num}p")
+        fi
+    fi
+
+    [[ -z "$DEL_THEME" ]] && { echo "No theme selected."; exit 1; }
+    [[ -d "$ICONS/$DEL_THEME" ]] || { echo "Error: theme '$DEL_THEME' not found."; exit 1; }
+
+    echo "→ About to delete: $ICONS/$DEL_THEME"
+    echo -n "   Confirm? [y/N] "
+    read -r confirm
+    [[ "$confirm" =~ ^[Yy]$ ]] || { echo "Cancelled."; exit 0; }
+
+    rm -rf "$ICONS/$DEL_THEME"
+    echo "✓ Uninstalled: $DEL_THEME"
+    exit 0
+fi
+
 
 # ── Pick theme ────────────────────────────────────────────────────────────────
 if [[ -z "${1:-}" ]]; then
