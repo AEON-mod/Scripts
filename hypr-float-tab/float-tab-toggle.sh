@@ -28,7 +28,7 @@ if [[ "$IS_FLOATING" == "true" && "$IS_PINNED" == "true" ]]; then
     if [[ -f "$STATE_FILE" ]]; then
         ORIG_WS=$(cat "$STATE_FILE")
         if [[ -n "$ORIG_WS" ]]; then
-            hyprctl dispatch movetoworkspacesilent "$ORIG_WS,address:${ADDRESS}"
+            hyprctl eval "hl.dispatch(hl.dsp.window.move({ workspace = \"${ORIG_WS}\", silent = true, window = \"address:${ADDRESS}\" }))" -q
         fi
         rm -f "$STATE_FILE"
     fi
