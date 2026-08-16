@@ -67,11 +67,8 @@ Run the `set-cursor` script to change your cursor theme and size.
 # Interactive picker (requires fzf)
 set-cursor
 
-# Set theme manually (keeps current size)
+# Set theme manually (prompts for size)
 set-cursor <ThemeName>
-
-# Set theme and size
-set-cursor <ThemeName> 24
 
 # List available themes
 set-cursor --list

@@ -3,8 +3,7 @@
 #
 # Usage:
 #   set-cursor                             # interactive picker (fzf)
-#   set-cursor <ThemeName>                 # set theme, keep current size
-#   set-cursor <ThemeName> <Size>          # set theme and size
+#   set-cursor <ThemeName>                 # set theme, then prompt for size
 #   set-cursor --list                      # list available themes
 #   set-cursor --uninstall                 # pick and uninstall a theme (fzf)
 #   set-cursor --uninstall <ThemeName>     # uninstall a specific theme
@@ -29,29 +28,30 @@ fi
 # ── Uninstall ─────────────────────────────────────────────────────────────────
 if [[ "${1:-}" == "--uninstall" ]]; then
     if [[ -n "${2:-}" ]]; then
-        DEL_THEME="$2"
+        THEME="$2"
+    elif command -v fzf &>/dev/null; then
+        THEME=$(list_themes | fzf --prompt="Uninstall cursor theme: " --height=15 --reverse)
+        [[ -z "$THEME" ]] && exit 0
     else
-        if command -v fzf &>/dev/null; then
-            DEL_THEME=$(list_themes | fzf --prompt="Uninstall theme: " --height=15 --reverse)
-        else
-            echo "Available themes:"
-            list_themes | nl -ba | sed 's/^/  /'
-            echo -n "Pick number to uninstall: "
-            read -r num
-            DEL_THEME=$(list_themes | sed -n "${num}p")
-        fi
+        echo "Available themes:"
+        list_themes | nl -ba | sed 's/^/  /'
+        echo -n "Pick number to uninstall: "
+        read -r num
+        THEME=$(list_themes | sed -n "${num}p")
+        [[ -z "$THEME" ]] && exit 0
     fi
-
-    [[ -z "$DEL_THEME" ]] && { echo "No theme selected."; exit 1; }
-    [[ -d "$ICONS/$DEL_THEME" ]] || { echo "Error: theme '$DEL_THEME' not found."; exit 1; }
-
-    echo "→ About to delete: $ICONS/$DEL_THEME"
-    echo -n "   Confirm? [y/N] "
+    
+    DIR="$ICONS/$THEME"
+    [[ -d "$DIR" ]] || { echo "Error: theme '$THEME' not found in $ICONS"; exit 1; }
+    
+    echo -n "Are you sure you want to permanently delete '$THEME'? [y/N] "
     read -r confirm
-    [[ "$confirm" =~ ^[Yy]$ ]] || { echo "Cancelled."; exit 0; }
-
-    rm -rf "$ICONS/$DEL_THEME"
-    echo "✓ Uninstalled: $DEL_THEME"
+    if [[ "$confirm" =~ ^[Yy]$ ]]; then
+        rm -rf "$DIR"
+        echo "✓ Uninstalled $THEME"
+    else
+        echo "Aborted."
+    fi
     exit 0
 fi
 
@@ -60,12 +60,14 @@ fi
 if [[ -z "${1:-}" ]]; then
     if command -v fzf &>/dev/null; then
         THEME=$(list_themes | fzf --prompt="Cursor theme: " --height=15 --reverse)
+        [[ -z "$THEME" ]] && { echo "No theme selected."; exit 1; }
     else
         echo "Available themes:"
         list_themes | nl -ba | sed 's/^/  /'
         echo -n "Pick number: "
         read -r num
         THEME=$(list_themes | sed -n "${num}p")
+        [[ -z "$THEME" ]] && { echo "No theme selected."; exit 1; }
     fi
 else
     THEME="$1"
@@ -77,15 +79,20 @@ fi
 [[ -d "$ICONS/$THEME/cursors" ]] || { echo "Error: theme '$THEME' not found in $ICONS"; exit 1; }
 
 # ── Pick size ─────────────────────────────────────────────────────────────────
-if [[ -n "${2:-}" ]]; then
-    SIZE="$2"
+if command -v fzf &>/dev/null; then
+    SIZES="16\n24\n32\n40\n48\n56\n64\n96"
+    SIZE=$(echo -e "$SIZES" | fzf --prompt="Cursor size: " --height=10 --reverse)
 else
-    # Try reading from variables.conf first, then variables.lua, then default
-    SIZE=$(grep '^\$cursorSize' "$VARS" 2>/dev/null | head -1 | sed 's/.*= *//')
-    if [[ -z "$SIZE" && -f "$VARS_LUA" ]]; then
-        SIZE=$(grep -E '^\s*cursorSize\s*=' "$VARS_LUA" | head -1 | sed -E 's/.*=\s*([0-9]+).*/\1/')
-    fi
-    SIZE="${SIZE:-24}"
+    echo -n "Cursor size (default 24): "
+    read -r SIZE
+fi
+
+[[ -z "$SIZE" ]] && SIZE="24"
+
+# Ensure SIZE is purely numeric to prevent config corruption from typos
+if ! [[ "$SIZE" =~ ^[0-9]+$ ]]; then
+    echo "⚠  Invalid size '$SIZE' provided. Defaulting to 24."
+    SIZE="24"
 fi
 
 echo "→ Setting cursor: $THEME  size: $SIZE"
