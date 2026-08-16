@@ -79,15 +79,24 @@ fi
 [[ -d "$ICONS/$THEME/cursors" ]] || { echo "Error: theme '$THEME' not found in $ICONS"; exit 1; }
 
 # ── Pick size ─────────────────────────────────────────────────────────────────
-if command -v fzf &>/dev/null; then
-    SIZES="16\n24\n32\n40\n48\n56\n64\n96"
-    SIZE=$(echo -e "$SIZES" | fzf --prompt="Cursor size: " --height=10 --reverse)
-else
-    echo -n "Cursor size (default 24): "
-    read -r SIZE
+if [ -t 1 ]; then
+    if command -v fzf &>/dev/null; then
+        SIZES="16\n24\n32\n40\n48\n56\n64\n96"
+        SIZE=$(echo -e "$SIZES" | fzf --prompt="Cursor size: " --height=10 --reverse)
+    else
+        echo -n "Cursor size (default 24): "
+        read -r SIZE
+    fi
 fi
 
-[[ -z "$SIZE" ]] && SIZE="24"
+if [[ -z "${SIZE:-}" ]]; then
+    # Try reading from variables.conf first, then variables.lua, then default
+    SIZE=$(grep -E '^\$cursorSize\s*=' "$VARS" 2>/dev/null | grep -oE '[0-9]+' | head -1)
+    if [[ -z "$SIZE" && -f "$VARS_LUA" ]]; then
+        SIZE=$(grep -E '^\s*cursorSize\s*=' "$VARS_LUA" 2>/dev/null | grep -oE '[0-9]+' | head -1)
+    fi
+    SIZE="${SIZE:-24}"
+fi
 
 # Ensure SIZE is purely numeric to prevent config corruption from typos
 if ! [[ "$SIZE" =~ ^[0-9]+$ ]]; then
