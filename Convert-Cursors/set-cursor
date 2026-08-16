@@ -102,6 +102,9 @@ fi
 if ! hyprctl setcursor "$THEME" "$SIZE" &>/dev/null; then
     echo "⚠  hyprctl setcursor failed — is Hyprland running?"
 fi
+# Update the env vars live so newly launched apps also see the new theme/size
+hyprctl setenv XCURSOR_THEME "$THEME" &>/dev/null
+hyprctl setenv XCURSOR_SIZE  "$SIZE"  &>/dev/null
 
 # Helper: set or append a key=value in an ini-style file
 _set_ini_key() {
