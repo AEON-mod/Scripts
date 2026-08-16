@@ -160,4 +160,7 @@ if command -v xrdb &>/dev/null; then
 fi
 
 echo "✓ Done! Theme: $THEME  Size: $SIZE"
-echo "  (Hyprland applied live — GTK apps may need restart)"
+
+# Reload Hyprland so the cursor change propagates to all running apps immediately
+echo "  Reloading Hyprland..."
+hyprctl reload &>/dev/null && echo "✓ Reloaded — changes are live across all apps!"
