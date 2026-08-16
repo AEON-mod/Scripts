@@ -84,7 +84,9 @@ step "Wiring keybind (${KEYBIND_MODS} + ${KEYBIND_KEY})"
 if $USE_LUA; then
     KB_FILE="${HYPRLAND_DIR}/keybinds.lua"
     KB_GUARD="float-tab-toggle.sh"
-    KB_LINE="hl.bind(\"${KEYBIND_MODS} + ${KEYBIND_KEY}\", hl.dsp.exec_cmd(\"~/.config/hypr/scripts/float-tab-toggle.sh\"))  -- float-tab toggle"
+    # Convert "Super+Shift" to "SUPER + SHIFT" for Lua config
+    LUA_MODS=$(echo "$KEYBIND_MODS" | tr '[:lower:]' '[:upper:]' | sed 's/+/ + /g')
+    KB_LINE="hl.bind(\"${LUA_MODS} + ${KEYBIND_KEY}\", hl.dsp.exec_cmd(\"~/.config/hypr/scripts/float-tab-toggle.sh\"))  -- float-tab toggle"
     patch_file "$KB_FILE" "$KB_GUARD" "$KB_LINE"
 else
     KB_FILE="${HYPRLAND_DIR}/keybinds.conf"
