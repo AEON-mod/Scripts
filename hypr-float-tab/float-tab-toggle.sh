@@ -34,7 +34,7 @@ if [[ "$IS_FLOATING" == "true" && "$IS_PINNED" == "true" ]]; then
             if [[ "$ORIG_WS" == special:* ]]; then
                 CURRENT_SPECIAL=$(hyprctl monitors -j | python3 -c "import sys,json; print(next((m.get('specialWorkspace', {}).get('name') for m in json.load(sys.stdin) if m.get('focused')), ''))")
                 if [[ "$CURRENT_SPECIAL" != "$ORIG_WS" ]]; then
-                    hyprctl dispatch togglespecialworkspace "${ORIG_WS#special:}"
+                    hyprctl eval "hl.dispatch(hl.dsp.workspace.toggle_special(\"${ORIG_WS#special:}\"))" -q
                 fi
             fi
         fi
@@ -77,6 +77,6 @@ if [[ "$WORKSPACE" == special:* ]]; then
     sleep 0.1
     WS_WINDOWS=$(hyprctl clients -j | python3 -c "import sys,json; print(sum(1 for c in json.load(sys.stdin) if c.get('workspace',{}).get('name') == '$WORKSPACE' and not c.get('pinned', False)))")
     if [[ "$WS_WINDOWS" -eq 0 ]]; then
-        hyprctl dispatch togglespecialworkspace "${WORKSPACE#special:}"
+        hyprctl eval "hl.dispatch(hl.dsp.workspace.toggle_special(\"${WORKSPACE#special:}\"))" -q
     fi
 fi
