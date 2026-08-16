@@ -98,20 +98,24 @@ fi
 echo "→ Setting cursor: $THEME  size: $SIZE"
 
 # ── 1. Update variables.conf and variables.lua ────────────────────────────────
-sed -i "s|^\\\$cursorTheme = .*|\$cursorTheme = $THEME|" "$VARS"
-sed -i "s|^\\\$cursorSize = .*|\$cursorSize = $SIZE|"    "$VARS"
+if [[ -f "$VARS" ]]; then
+    sed -i "s|^\\\$cursorTheme = .*|\$cursorTheme = $THEME|" "$VARS"
+    sed -i "s|^\\\$cursorSize = .*|\$cursorSize = $SIZE|"    "$VARS"
+fi
 if [[ -f "$VARS_LUA" ]]; then
     sed -i -E "s|^([ \t]*cursorTheme[ \t]*=[ \t]*).*|\1\"$THEME\",|" "$VARS_LUA"
     sed -i -E "s|^([ \t]*cursorSize[ \t]*=[ \t]*).*|\1$SIZE,|" "$VARS_LUA"
 fi
 
 # ── 2. Apply live (Hyprland + XCursor env) ───────────────────────────────────
-if ! hyprctl setcursor "$THEME" "$SIZE" &>/dev/null; then
-    echo "⚠  hyprctl setcursor failed — is Hyprland running?"
+if command -v hyprctl &>/dev/null; then
+    if ! hyprctl setcursor "$THEME" "$SIZE" &>/dev/null; then
+        echo "⚠  hyprctl setcursor failed — is Hyprland running?"
+    fi
+    # Update the env vars live so newly launched apps also see the new theme/size
+    hyprctl setenv XCURSOR_THEME "$THEME" &>/dev/null
+    hyprctl setenv XCURSOR_SIZE  "$SIZE"  &>/dev/null
 fi
-# Update the env vars live so newly launched apps also see the new theme/size
-hyprctl setenv XCURSOR_THEME "$THEME" &>/dev/null
-hyprctl setenv XCURSOR_SIZE  "$SIZE"  &>/dev/null
 
 # Helper: set or append a key=value in an ini-style file
 _set_ini_key() {

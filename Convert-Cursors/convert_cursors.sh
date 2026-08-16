@@ -148,26 +148,83 @@ install_windows_theme() {
             continue
         fi
 
-        # Convert via win2xcur into a temp dir, then copy
-        # win2xcur names output files after the original input stem (e.g. Normal → Normal)
-        local tmp_dir
-        tmp_dir="$(mktemp -d)"
-        if win2xcur -o "$tmp_dir" "$src" &>/dev/null; then
-            local converted="$tmp_dir/$stem"
-            if [[ -f "$converted" ]]; then
-                cp "$converted" "$cursors_dir/$x11_name"
-                log_ok "$stem → $x11_name"
+        # Convert via win2xcur generating multiple sizes, then merge
+        local tmp_base
+        tmp_base="$(mktemp -d)"
+        local merge_inputs=()
+        
+        # Generate multiple scales to support dynamic resizing
+        for scale in 0.5 0.75 1.0 1.25 1.5 2.0; do
+            local scale_dir="$tmp_base/s$scale"
+            mkdir -p "$scale_dir"
+            if win2xcur -o "$scale_dir" --scale "$scale" "$src" &>/dev/null; then
+                if [[ -f "$scale_dir/$stem" ]]; then
+                    merge_inputs+=("$scale_dir/$stem")
+                fi
+            fi
+        done
+        
+        if [[ ${#merge_inputs[@]} -gt 0 ]]; then
+            if python3 - "$cursors_dir/$x11_name" "${merge_inputs[@]}" &>/dev/null << 'EOF'
+import struct, sys
+
+MAGIC = b'Xcur'
+TYPE_IMAGE = 0xfffd0002
+
+def parse_xcursor(data):
+    if data[:4] != MAGIC: return None, []
+    _, _, ntoc = struct.unpack_from('<III', data, 4)
+    chunks = []
+    actual_size = None
+    for i in range(ntoc):
+        ctype, subtype, pos = struct.unpack_from('<III', data, 16 + i * 12)
+        if ctype != TYPE_IMAGE: continue
+        w, h = struct.unpack_from('<II', data, pos + 16)[0:2]
+        chunk_len = 36 + w * h * 4
+        actual_size = max(w, h)
+        raw = bytearray(data[pos:pos + chunk_len])
+        struct.pack_into('<I', raw, 8, actual_size)
+        chunks.append((actual_size, bytes(raw)))
+    return actual_size, chunks
+
+out_path = sys.argv[1]
+seen_sizes = set()
+merged = []
+for path in sys.argv[2:]:
+    try:
+        with open(path, 'rb') as f:
+            size, chunks = parse_xcursor(f.read())
+        if size is not None and size not in seen_sizes:
+            seen_sizes.add(size)
+            merged.extend(chunks)
+    except: pass
+
+if not merged: sys.exit(1)
+merged.sort(key=lambda x: x[0])
+
+ntoc = len(merged)
+pos = 16 + ntoc * 12
+out = bytearray(MAGIC + struct.pack('<III', 16, 1, ntoc))
+for size, raw in merged:
+    out += struct.pack('<III', TYPE_IMAGE, size, pos)
+    pos += len(raw)
+for _, raw in merged: out += raw
+
+with open(out_path, 'wb') as f: f.write(out)
+EOF
+            then
+                log_ok "$stem → $x11_name (multi-size)"
                 make_symlinks "$cursors_dir" "$x11_name"
                 ok=$(( ok + 1 ))
             else
-                log_err "$stem — win2xcur produced no output (looked for: $stem)"
+                log_err "$stem — multi-size merge failed"
                 fail=$(( fail + 1 ))
             fi
         else
-            log_err "$stem — win2xcur conversion failed"
+            log_err "$stem — win2xcur conversion failed for all sizes"
             fail=$(( fail + 1 ))
         fi
-        rm -rf "$tmp_dir"
+        rm -rf "$tmp_base"
     done
 
     echo -e "  ──────────────────────────────"
@@ -246,6 +303,7 @@ process_theme() {
     # ── Case 3: Has a Cursors/ subfolder (Windows pack with subfolder) ──
     local cursors_subdir=""
     for sub in "$src"/*/; do
+        [[ -d "$sub" ]] || continue
         # Skip tmp/ and other non-cursor folders
         local subname
         subname="$(basename "$sub")"
@@ -311,10 +369,6 @@ fi
 
 echo -e "\n${BLD}${GRN}═══ All done! ═══${RST}"
 echo ""
-echo "Apply a theme:"
-echo -e "  ${CYN}hyprctl setcursor <ThemeName> 24${RST}"
+echo "You can now easily apply your theme globally by running:"
+echo -e "  ${CYN}set-cursor${RST}"
 echo ""
-echo "Make it permanent (add to ~/.config/hypr/hyprland.conf):"
-echo -e "  ${CYN}env = XCURSOR_THEME,<ThemeName>"
-echo -e "  env = XCURSOR_SIZE,24"
-echo -e "  exec-once = hyprctl setcursor <ThemeName> 24${RST}"
