@@ -22,6 +22,13 @@ A toolkit to permanently boost network throughput, reduce latency, and increase 
 
 ---
 
+## 🌐 Browser Auto-Integration
+
+Want all your browser downloads to automatically use Net-Booster without typing commands? 
+👉 **[Read the Browser Auto-Integration Guide](Browser-Integration.md)**
+
+---
+
 ## ⚡ The `dl` Command
 
 After running the script for your OS, the `dl` command becomes available everywhere in your terminal. It replaces `wget` or `curl` for heavy lifting.
