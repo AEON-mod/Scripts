@@ -119,9 +119,9 @@ timeout=60
 connect-timeout=10
 file-allocation=falloc
 continue=true
-save-session=~/.config/aria2/session.gz
+save-session=/home/$USER/.config/aria2/session.gz
 save-session-interval=30
-input-file=~/.config/aria2/session.gz
+input-file=/home/$USER/.config/aria2/session.gz
 check-certificate=true
 ```
 
