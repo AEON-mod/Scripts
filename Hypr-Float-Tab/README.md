@@ -40,7 +40,7 @@ Don't want to touch any config files yourself? One command handles everything:
 
 ```bash
 git clone https://github.com/AEON-mod/Scripts.git
-cd Scripts/hypr-float-tab
+cd Scripts/Hypr-Float-Tab
 ./install.sh
 ```
 
