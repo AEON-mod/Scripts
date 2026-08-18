@@ -109,16 +109,17 @@ dl -t file.torrent
 
 ### 🌐 Browser Auto-Integration (Optional)
 
-The optimization script automatically sets up a background listener. To send all your browser downloads through the Net-Booster engine automatically:
+The optimization script automatically sets up a background listener on your PC. To send all your browser downloads through the 16-connection Net-Booster engine automatically:
 
 1. Install the extension for your browser:
    * **Chrome / Edge / Brave:** [Aria2 for Chrome](https://chrome.google.com/webstore/detail/aria2-for-chrome/mpkodccbngfoacfalldjimigbofkhgjn)
    * **Firefox:** [Aria2 Integration](https://addons.mozilla.org/en-US/firefox/addon/aria2-integration/)
-2. **Right-click** the extension icon in your toolbar and select **Options / Settings**.
-3. Click the **`+` (Add)** button to create a connection profile:
-   * **Name:** Net-Booster
-   * **Host:** `localhost`
-   * **Port:** `6800`
-   * **Secret:** *(Leave completely blank)*
-4. **CRITICAL SPEED FIX:** Scroll down to the **RPC Parameters** box. By default, it says `split: 5`. **You must delete this text so the box is empty!** (Otherwise, it will bottleneck the 16-connection setup down to 5).
-5. Click **Save** and turn on **"Auto-Capture"**.
+2. **Right-click** the extension icon in your browser toolbar and select **Options** (or Settings).
+3. Under **Download Capture**:
+   * Turn ON **"Enable auto capture when download file size"**
+   * Change the size from `100` MB to `0` MB (so it captures everything).
+4. Under **Aria2-RPC-Server**:
+   * Verify the URL is exactly `http://localhost:6800/jsonrpc`
+   * Leave the Secret Key blank.
+
+**🎉 Done!** Every file you click to download will now instantly route through Net-Booster at maximum speed. Click the extension icon and open **AriaNG** to view your live download dashboard!
