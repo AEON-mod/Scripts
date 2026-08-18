@@ -16,7 +16,6 @@ function warn($msg) { Write-Host "  [!!] $msg" -ForegroundColor Yellow }
 # ── Detect active network adapter ──────────────────────────────────────────────
 function Get-ActiveAdapters {
     Get-NetAdapter | Where-Object { $_.Status -eq "Up" }
-}
 
 # ── 1. TCP Stack Tuning ────────────────────────────────────────────────────────
 function Apply-TCPTuning {
@@ -52,7 +51,6 @@ function Apply-TCPTuning {
     Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" `
         -Name "SackOpts" -Value 1 -Type DWord
     ok "TCP SACK: enabled"
-}
 
 # ── 2. DNS — Cloudflare Security + Quad9 ──────────────────────────────────────
 function Apply-DNS {
@@ -77,7 +75,6 @@ function Apply-DNS {
     # Flush old cache
     Clear-DnsClientCache
     ok "DNS cache flushed"
-}
 
 # ── 3. WiFi Power Save ─────────────────────────────────────────────────────────
 function Disable-WiFiPowerSave {
@@ -100,7 +97,6 @@ function Disable-WiFiPowerSave {
     # Also set power plan to High Performance for network devices
     powercfg /change standby-timeout-ac 0 | Out-Null
     ok "Power plan: network adapters stay awake"
-}
 
 # ── 4. Install aria2 ───────────────────────────────────────────────────────────
 function Install-Aria2 {
@@ -135,9 +131,10 @@ function Install-Aria2 {
     warn "No package manager found. Install aria2 manually:"
     warn "  winget install aria2.aria2    (recommended)"
     warn "  or download from: https://github.com/aria2/aria2/releases"
-}
 
 # ── 5. Configure aria2 ─────────────────────────────────────────────────────────
+
+# ── Status check ───────────────────────────────────────────────────────────────
 function Configure-Aria2 {
     $configDir = "$env:USERPROFILE\.config\aria2"
     $configFile = "$configDir\aria2.conf"
@@ -164,6 +161,12 @@ enable-peer-exchange=true
 seed-ratio=0
 seed-time=0
 bt-stop-timeout=300
+
+# --- RPC Auto-Capture (Browser Integration) ---
+enable-rpc=true
+rpc-listen-all=false
+rpc-listen-port=6800
+dir=$env:USERPROFILE\Downloads
 "@ | Set-Content $configFile -Encoding UTF8
 
     # Create dl.bat shortcut in user PATH
@@ -185,7 +188,19 @@ aria2c --conf-path="%USERPROFILE%\.config\aria2\aria2.conf" %*
     ok "'dl' shortcut: $batDir\dl.bat"
 }
 
-# ── Status check ───────────────────────────────────────────────────────────────
+function Setup-RPCDaemon {
+    info "Setting up silent RPC background daemon..."
+    $startupDir = "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\Startup"
+    $vbsFile = "$startupDir\aria2-daemon.vbs"
+    @"
+Set WshShell = CreateObject("WScript.Shell")
+WshShell.Run "aria2c --conf-path=""" & CreateObject("wscript.shell").ExpandEnvironmentStrings("%USERPROFILE%") & "\.config\aria2\aria2.conf""", 0, False
+"@ | Set-Content $vbsFile -Encoding ASCII
+    
+    # Start it right now
+    Start-Process "wscript.exe" -ArgumentList "`"$vbsFile`"" -WindowStyle Hidden
+    ok "Daemon running and added to Startup"
+}
 function Show-Status {
     Write-Host ""
     Write-Host "  Current state:" -ForegroundColor Cyan
@@ -195,7 +210,6 @@ function Show-Status {
     Write-Host "    DNS: $($dns.ServerAddresses -join ', ')"
     $aria2 = if (Get-Command aria2c -ErrorAction SilentlyContinue) { "installed" } else { "not found" }
     Write-Host "    aria2: $aria2"
-}
 
 # ── Main ───────────────────────────────────────────────────────────────────────
 Write-Host ""
@@ -210,7 +224,6 @@ switch ($args[0]) {
         Write-Host "  --status   Show current state"
         exit 0
     }
-}
 
 Write-Host "[1/5] TCP stack tuning"
 Apply-TCPTuning
@@ -228,8 +241,12 @@ Write-Host "[4/5] Install aria2"
 Install-Aria2
 
 Write-Host ""
-Write-Host "[5/5] Configure aria2 + dl shortcut"
+Write-Host "[5/6] Configure aria2 + dl shortcut"
 Configure-Aria2
+
+Write-Host ""
+Write-Host "[6/6] Browser Auto-Capture Daemon"
+Setup-RPCDaemon
 
 Show-Status
 

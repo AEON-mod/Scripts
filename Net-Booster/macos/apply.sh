@@ -115,6 +115,8 @@ install_aria2() {
 }
 
 # ── 5. Configure aria2 + dl shortcut ──────────────────────────────────────────
+
+# ── Status ────────────────────────────────────────────────────────────────────
 configure_aria2() {
     local user_home
     user_home=$(eval echo "~${SUDO_USER:-$USER}")
@@ -124,7 +126,7 @@ configure_aria2() {
 
     mkdir -p "$config_dir" "$(dirname "$dl_bin")"
 
-    cat > "$config_file" << 'ARIA2'
+    cat > "$config_file" << ARIA2
 split=16
 max-connection-per-server=16
 min-split-size=1M
@@ -145,12 +147,18 @@ enable-peer-exchange=true
 seed-ratio=0
 seed-time=0
 bt-stop-timeout=300
+
+# --- RPC Auto-Capture (Browser Integration) ---
+enable-rpc=true
+rpc-listen-all=false
+rpc-listen-port=6800
+dir=$user_home/Downloads
 ARIA2
 
-    cat > "$dl_bin" << 'DL'
+    cat > "$dl_bin" << DL
 #!/bin/bash
 # dl — fast parallel downloader (16 connections, auto-resume)
-exec aria2c --conf-path="$HOME/.config/aria2/aria2.conf" "$@"
+exec aria2c --conf-path="\$HOME/.config/aria2/aria2.conf" "\$@"
 DL
     chmod +x "$dl_bin"
     chown -R "${SUDO_USER:-$USER}" "$config_dir" "$dl_bin" 2>/dev/null || true
@@ -165,7 +173,40 @@ DL
     ok "'dl' shortcut: $dl_bin"
 }
 
-# ── Status ────────────────────────────────────────────────────────────────────
+setup_rpc_daemon() {
+    local user_home
+    user_home=$(eval echo "~${SUDO_USER:-$USER}")
+    local plist="$user_home/Library/LaunchAgents/com.aria2.daemon.plist"
+    local aria2_path
+    aria2_path=$(sudo -u "${SUDO_USER:-$USER}" which aria2c)
+    
+    mkdir -p "$user_home/Library/LaunchAgents"
+    
+    cat > "$plist" << PLIST
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.aria2.daemon</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>$aria2_path</string>
+        <string>--conf-path</string>
+        <string>$user_home/.config/aria2/aria2.conf</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+</dict>
+</plist>
+PLIST
+
+    chown "${SUDO_USER:-$USER}" "$plist"
+    sudo -u "${SUDO_USER:-$USER}" launchctl load -w "$plist" 2>/dev/null || true
+    ok "Background RPC daemon started via LaunchAgent"
+}
 show_status() {
     echo ""
     info "Current state:"
@@ -198,7 +239,8 @@ echo "[1/5] TCP kernel tuning";           apply_sysctl
 echo ""; echo "[2/5] Secure DNS";         apply_dns
 echo ""; echo "[3/5] WiFi power config";  disable_wifi_powersave
 echo ""; echo "[4/5] Install aria2";      install_aria2
-echo ""; echo "[5/5] Configure aria2";    configure_aria2
+echo ""; echo "[5/6] Configure aria2";    configure_aria2
+echo ""; echo "[6/6] Browser Auto-Capture Daemon"; setup_rpc_daemon
 show_status
 
 echo ""

@@ -112,3 +112,19 @@ dl https://url1.com/file1 https://url2.com/file2
 # Torrent
 dl -t file.torrent
 ```
+
+### 🌐 Browser Auto-Integration (Optional)
+
+The optimization script automatically sets up a background listener. To send all your browser downloads through the Net-Booster engine automatically:
+
+1. Install the extension for your browser:
+   * **Chrome / Edge / Brave:** [Aria2 for Chrome](https://chrome.google.com/webstore/detail/aria2-for-chrome/mpkodccbngfoacfalldjimigbofkhgjn)
+   * **Firefox:** [Aria2 Integration](https://addons.mozilla.org/en-US/firefox/addon/aria2-integration/)
+2. **Right-click** the extension icon in your toolbar and select **Options / Settings**.
+3. Click the **`+` (Add)** button to create a connection profile:
+   * **Name:** Net-Booster
+   * **Host:** `localhost`
+   * **Port:** `6800`
+   * **Secret:** *(Leave completely blank)*
+4. **CRITICAL SPEED FIX:** Scroll down to the **RPC Parameters** box. By default, it says `split: 5`. **You must delete this text so the box is empty!** (Otherwise, it will bottleneck the 16-connection setup down to 5).
+5. Click **Save** and turn on **"Auto-Capture"**.

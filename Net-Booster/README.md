@@ -22,12 +22,6 @@ A toolkit to permanently boost network throughput, reduce latency, and increase 
 
 ---
 
-## 🌐 Browser Auto-Integration
-
-Want all your browser downloads to automatically use Net-Booster without typing commands? 
-👉 **[Read the Browser Auto-Integration Guide](Browser-Integration.md)**
-
----
 
 ## ⚡ The `dl` Command
 

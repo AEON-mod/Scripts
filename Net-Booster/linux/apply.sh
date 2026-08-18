@@ -7,8 +7,10 @@ set -e
 
 SYSCTL_FILE="/etc/sysctl.d/99-network-speed.conf"
 UDEV_FILE="/etc/udev/rules.d/81-wifi-speed.rules"
-ARIA2_CONF="$HOME/.config/aria2/aria2.conf"
-DL_BIN="$HOME/.local/bin/dl"
+REAL_USER="${SUDO_USER:-$USER}"
+USER_HOME=$(eval echo "~$REAL_USER")
+ARIA2_CONF="$USER_HOME/.config/aria2/aria2.conf"
+DL_BIN="$USER_HOME/.local/bin/dl"
 
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; BLUE='\033[0;34m'; NC='\033[0m'
 ok()   { echo -e "  ${GREEN}✅ $*${NC}"; }
@@ -89,9 +91,13 @@ disable_wifi_powersave() {
     ok "WiFi udev rule → $UDEV_FILE"
 }
 
+
 configure_aria2() {
-    mkdir -p "$(dirname "$ARIA2_CONF")" "$HOME/.local/bin"
-    cat > "$ARIA2_CONF" << 'ARIA2'
+    mkdir -p "$(dirname "$ARIA2_CONF")" "$USER_HOME/.local/bin"
+    touch "$(dirname "$ARIA2_CONF")/session.gz"
+    chown "$REAL_USER" "$(dirname "$ARIA2_CONF")/session.gz"
+    
+    cat > "$ARIA2_CONF" << ARIA2
 split=16
 max-connection-per-server=16
 min-split-size=1M
@@ -104,9 +110,9 @@ timeout=60
 connect-timeout=10
 file-allocation=falloc
 continue=true
-save-session=~/.config/aria2/session.gz
+save-session=$USER_HOME/.config/aria2/session.gz
 save-session-interval=30
-input-file=~/.config/aria2/session.gz
+input-file=$USER_HOME/.config/aria2/session.gz
 check-certificate=true
 follow-metalink=true
 metalink-preferred-protocol=https
@@ -116,17 +122,49 @@ seed-ratio=0
 seed-time=0
 bt-stop-timeout=300
 bt-save-metadata=true
+
+# --- RPC Auto-Capture (Browser Integration) ---
+enable-rpc=true
+rpc-listen-all=false
+rpc-listen-port=6800
+dir=$USER_HOME/Downloads
 ARIA2
-    cat > "$DL_BIN" << 'DL'
+    
+    cat > "$DL_BIN" << DL
 #!/bin/bash
 # dl — fast parallel downloader (16 connections, auto-resume)
-exec aria2c --conf-path="$HOME/.config/aria2/aria2.conf" "$@"
+exec aria2c --conf-path="$USER_HOME/.config/aria2/aria2.conf" "\$@"
 DL
     chmod +x "$DL_BIN"
+    chown -R "$REAL_USER" "$(dirname "$ARIA2_CONF")" "$DL_BIN" 2>/dev/null || true
+
     ok "aria2 config → $ARIA2_CONF"
     ok "'dl' command → $DL_BIN"
 }
 
+setup_rpc_daemon() {
+    local SYSTEMD_DIR="$USER_HOME/.config/systemd/user"
+    mkdir -p "$SYSTEMD_DIR"
+    cat > "$SYSTEMD_DIR/aria2-daemon.service" << SERVICE
+[Unit]
+Description=Aria2c RPC Daemon
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/aria2c --conf-path=%h/.config/aria2/aria2.conf
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target
+SERVICE
+    chown -R "$REAL_USER" "$USER_HOME/.config/systemd"
+    
+    sudo -u "$REAL_USER" XDG_RUNTIME_DIR="/run/user/$(id -u "$REAL_USER")" systemctl --user daemon-reload
+    sudo -u "$REAL_USER" XDG_RUNTIME_DIR="/run/user/$(id -u "$REAL_USER")" systemctl --user enable --now aria2-daemon.service 2>/dev/null || true
+    ok "Background RPC daemon started (Port 6800)"
+}
 check_status() {
     echo ""
     info "Current state:"
@@ -156,7 +194,8 @@ main() {
     echo -e "${BLUE}[1/4] aria2 parallel downloader${NC}";  install_aria2
     echo ""; echo -e "${BLUE}[2/4] TCP kernel tuning${NC}";       apply_sysctl
     echo ""; echo -e "${BLUE}[3/4] WiFi power save${NC}";         disable_wifi_powersave
-    echo ""; echo -e "${BLUE}[4/4] aria2 config + dl command${NC}"; configure_aria2
+    echo ""; echo -e "${BLUE}[4/5] aria2 config + dl command${NC}"; configure_aria2
+    echo ""; echo -e "${BLUE}[5/5] Browser Auto-Capture Daemon${NC}"; setup_rpc_daemon
     check_status
     echo ""
     echo -e "${GREEN}━━━ Done! ━━━${NC}"
