@@ -7,6 +7,32 @@
 
 ---
 
+## 🚀 Installation
+
+Install the required parallel download manager in a single command matching your package manager, then run the optimization script.
+
+### Debian / Ubuntu
+```bash
+sudo apt update && sudo apt install -y aria2
+```
+
+### Fedora
+```bash
+sudo dnf install -y aria2
+```
+
+### Arch Linux
+```bash
+sudo pacman -S --noconfirm aria2
+```
+
+### openSUSE
+```bash
+sudo zypper install aria2
+```
+
+---
+
 ## ⚡ Quick Start (Recommended)
 
 ```bash
@@ -36,17 +62,7 @@ bash apply.sh --status
 
 ## 🔧 Manual Steps (if you prefer)
 
-### 1. Install aria2
-
-| Distro | Command |
-| :--- | :--- |
-| **Arch / Manjaro** | `sudo pacman -S aria2` |
-| **Ubuntu / Debian** | `sudo apt install aria2` |
-| **Fedora / RHEL** | `sudo dnf install aria2` |
-| **openSUSE** | `sudo zypper install aria2` |
-| **Any** | Binary from [aria2.github.io](https://aria2.github.io) |
-
-### 2. TCP Kernel Tuning
+### 1. TCP Kernel Tuning
 Create `/etc/sysctl.d/99-network-speed.conf`:
 ```ini
 net.core.rmem_max = 67108864
@@ -76,7 +92,7 @@ Apply immediately (no reboot needed):
 sudo sysctl --system
 ```
 
-### 3. Disable WiFi Power Save
+### 2. Disable WiFi Power Save
 ```bash
 # Find your WiFi interface
 iw dev | grep Interface
@@ -88,7 +104,7 @@ sudo iw dev wlp0s20f3 set power_save off
 echo 'ACTION=="add", SUBSYSTEM=="net", KERNEL=="wlp*", RUN+="/usr/sbin/iw dev $name set power_save off"' | sudo tee /etc/udev/rules.d/81-wifi-speed.rules
 ```
 
-### 4. Configure aria2
+### 3. Configure aria2
 Create `~/.config/aria2/aria2.conf`:
 ```ini
 split=16
@@ -118,7 +134,7 @@ exec aria2c --conf-path="$HOME/.config/aria2/aria2.conf" "$@"
 chmod +x ~/.local/bin/dl
 ```
 
-### 5. DNS Security (optional but recommended)
+### 4. DNS Security (optional but recommended)
 Use **Cloudflare Security** (blocks malware/phishing) + **Quad9** over TLS.
 
 Edit `/etc/systemd/resolved.conf`:

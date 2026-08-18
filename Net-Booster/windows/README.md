@@ -7,10 +7,30 @@
 
 ---
 
+## 🚀 Installation
+
+Install the required parallel download manager in a single command matching your package manager, then run the optimization script.
+
+### Winget (Windows 11 Default)
+```powershell
+winget install aria2.aria2 --silent --accept-package-agreements --accept-source-agreements
+```
+
+### Scoop
+```powershell
+scoop install aria2
+```
+
+### Chocolatey
+```powershell
+choco install aria2 -y
+```
+
+---
+
 ## ⚡ Quick Start (Recommended)
 
-1. Open **PowerShell as Administrator**.
-2. Run the following:
+After installing `aria2`, open **PowerShell as Administrator** and apply all system network optimizations:
 
 ```powershell
 Set-ExecutionPolicy Bypass -Scope Process -Force
@@ -39,11 +59,7 @@ To verify current state without making changes:
 
 ## 🔧 Manual Steps (if you prefer)
 
-### 1. Install aria2
-
-Run `winget install aria2.aria2` (or use Scoop/Chocolatey).
-
-### 2. TCP & Network Tuning
+### 1. TCP & Network Tuning
 Open PowerShell as Admin:
 ```powershell
 netsh int tcp set global autotuninglevel=normal
@@ -52,13 +68,13 @@ netsh int tcp set global rss=enabled
 Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" -Name "NetworkThrottlingIndex" -Value 0xffffffff -Type DWord
 ```
 
-### 3. Disable WiFi Power Save
+### 2. Disable WiFi Power Save
 ```powershell
 netsh wlan set autoconfig enabled=yes interface="Wi-Fi"
 powercfg /change standby-timeout-ac 0
 ```
 
-### 4. Configure aria2
+### 3. Configure aria2
 Create `%USERPROFILE%\.config\aria2\aria2.conf`:
 ```ini
 split=16
@@ -76,7 +92,7 @@ Create a batch file `dl.bat` in a folder in your PATH:
 aria2c --conf-path="%USERPROFILE%\.config\aria2\aria2.conf" %*
 ```
 
-### 5. Secure DNS (Cloudflare Security)
+### 4. Secure DNS (Cloudflare Security)
 ```powershell
 Set-DnsClientServerAddress -InterfaceAlias "Wi-Fi" -ServerAddresses ("1.1.1.2", "9.9.9.9")
 Clear-DnsClientCache

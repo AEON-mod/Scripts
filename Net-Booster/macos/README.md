@@ -7,7 +7,21 @@
 
 ---
 
+## 🚀 Installation
+
+Install the required parallel download manager in a single command, then run the optimization script.
+
+### Homebrew
+```bash
+brew install aria2
+```
+> *If you don't have Homebrew, install it via: `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`*
+
+---
+
 ## ⚡ Quick Start (Recommended)
+
+After installing `aria2`, apply all system network optimizations automatically:
 
 ```bash
 # Clone or navigate to this folder, then:
@@ -36,11 +50,7 @@ bash apply.sh --status
 
 ## 🔧 Manual Steps (if you prefer)
 
-### 1. Install aria2
-
-Run `brew install aria2`.
-
-### 2. TCP Kernel Tuning
+### 1. TCP Kernel Tuning
 ```bash
 sudo sysctl -w kern.ipc.maxsockbuf=8388608
 sudo sysctl -w net.inet.tcp.sendspace=1048576
@@ -50,14 +60,14 @@ sudo sysctl -w net.inet.tcp.fastopen=1
 ```
 *(To persist these, add them to `/etc/sysctl.conf`)*
 
-### 3. Disable WiFi Power Throttling
+### 2. Disable WiFi Power Throttling
 ```bash
 sudo pmset -a womp 1
 sudo pmset -a tcpkeepalive 1
 defaults write NSGlobalDomain NSAppSleepDisabled -bool YES
 ```
 
-### 4. Configure aria2
+### 3. Configure aria2
 Create `~/.config/aria2/aria2.conf`:
 ```ini
 split=16
@@ -76,7 +86,7 @@ exec aria2c --conf-path="$HOME/.config/aria2/aria2.conf" "$@"
 ```
 `chmod +x ~/.local/bin/dl`
 
-### 5. Secure DNS (Cloudflare Security)
+### 4. Secure DNS (Cloudflare Security)
 ```bash
 sudo networksetup -setdnsservers Wi-Fi 1.1.1.2 9.9.9.9 1.0.0.2 149.112.112.112
 sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder
