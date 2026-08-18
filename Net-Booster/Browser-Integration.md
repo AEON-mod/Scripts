@@ -102,10 +102,16 @@ Now that the engine is running in the background, connect your browser to it:
 2. **Firefox:** Install [Aria2 Integration](https://addons.mozilla.org/en-US/firefox/addon/aria2-integration/)
 
 ### Extension Setup:
-Click the extension icon in your browser toolbar, go to its settings (usually a wrench/gear icon), and ensure the connection details match this:
-* **Host / IP:** `localhost` (or `127.0.0.1`)
-* **Port:** `6800`
 
-Toggle the extension to **"Auto-Capture"** mode.
+1. **Right-click** the extension icon in your browser toolbar and select **Options / Settings**.
+2. Tap the **`+` (Add)** button to create a new connection profile.
+3. Fill out the details:
+   * **Name:** Net-Booster (or anything you like)
+   * **Host:** `localhost`
+   * **Port:** `6800`
+   * **Secret:** *(Leave completely blank)*
+4. **CRITICAL SPEED FIX:** Scroll down to the **RPC Parameters** box. By default, the extension will put `split: 5` in this box. **You must delete this so the box is empty!** If you don't delete it, the extension will override our 16-connection speed boost and bottleneck you down to 5.
+5. Click **Save**.
+6. Finally, click the extension icon in your toolbar and toggle it to **"Auto-Capture"** mode (usually a large switch).
 
 **🎉 Done!** Every file you download in your browser will now automatically route through Net-Booster at maximum speed.
