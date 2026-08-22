@@ -41,6 +41,7 @@ Don't want to touch any config files yourself? One command handles everything:
 ```bash
 git clone https://github.com/AEON-mod/Scripts.git
 cd Scripts/Hypr-Float-Tab
+chmod +x install.sh
 ./install.sh
 ```
 
