@@ -1,4 +1,9 @@
 <div align="center">
+  <img width="490" height="331" alt="Scrot_23_16-8" src="https://github.com/user-attachments/assets/d607b405-783d-48c9-8613-9f5b46817db5" />
+
+</div>
+
+<div align="center">
   <h1>🖱️ Linux Cursor Toolkit (Convert & Set)</h1>
   <p><i>A seamless toolkit to install, auto-convert Windows `.ani`/`.cur` themes, and easily apply them globally across Hyprland and GTK apps.</i></p>
 </div>
