@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# Aesthetic screenshot wrapper for Hyprshot
+
+DIR="$HOME/Pictures/Screenshots"
+mkdir -p "$DIR"
+
+# Count existing Scrot_*.png files to get the next screenshot number
+COUNT=$(ls -1 "$DIR"/Scrot_*.png 2>/dev/null | wc -l)
+NEXT_COUNT=$((COUNT + 1))
+
+# Generate filename like: Scrot_1_19-7.png (using - instead of / because Linux doesn't allow / in filenames)
+FILENAME="Scrot_${NEXT_COUNT}_$(date +'%d-%-m').png"
+
+MODE="$1"
+
+if [ -z "$MODE" ]; then
+    echo "Usage: takeshot [output|window|region]"
+    exit 1
+fi
+
+hyprshot -m "$MODE" -o "$DIR" -f "$FILENAME"

@@ -1,0 +1,23 @@
+# ============================================================
+#  skhd hotkey bindings for Lucidity (macOS)
+#  Place this file at ~/.config/skhd/skhdrc
+#  or append these bindings to your existing skhdrc.
+# ============================================================
+
+# Adjust opacity
+ctrl + shift - 0x18 : ~/.config/lucidity/lucidity.sh up        # Numpad + / =
+ctrl + shift - 0x1B : ~/.config/lucidity/lucidity.sh down       # Numpad - / -
+
+# Reset to fully opaque
+ctrl + shift - 0x2C : ~/.config/lucidity/lucidity.sh reset      # Numpad * / /
+
+# Toggle transparency on/off for focused app
+ctrl + shift - 0x31 : ~/.config/lucidity/lucidity.sh toggle     # Space
+
+# Toggle Always-On-Top (pin)
+ctrl + shift - 0x2F : ~/.config/lucidity/lucidity.sh pin        # .
+
+# Quick-set presets (optional)
+ctrl + shift - 1 : ~/.config/lucidity/lucidity.sh set 0.90
+ctrl + shift - 2 : ~/.config/lucidity/lucidity.sh set 0.80
+ctrl + shift - 3 : ~/.config/lucidity/lucidity.sh set 0.70
