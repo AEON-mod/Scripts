@@ -101,10 +101,12 @@ PYEOF
 
 success "QML files patched successfully"
 
-CAELESTIA_GITDIR=""
-for d in "$HOME/caelestia" "$HOME/.local/share/caelestia"; do
-    [[ -f "$d/CMakeLists.txt" ]] && CAELESTIA_GITDIR="$d" && break
-done
+CAELESTIA_GITDIR="${CAELESTIA_GITDIR:-}"
+if [[ -z "$CAELESTIA_GITDIR" ]]; then
+    for d in "$HOME/caelestia" "$HOME/.local/share/caelestia" "$HOME/src/caelestia" "$HOME/Projects/caelestia" "$HOME/git/caelestia"; do
+        [[ -f "$d/CMakeLists.txt" ]] && CAELESTIA_GITDIR="$d" && break
+    done
+fi
 
 if [[ -n "$CAELESTIA_GITDIR" ]]; then
     info "Found source at $CAELESTIA_GITDIR - patching config and rebuilding plugin..."
@@ -137,7 +139,9 @@ PYEOF
     success "Plugin rebuilt and installed"
 else
     warn "Caelestia source not found - skipping plugin rebuild."
-    warn "If the toggle does not appear, see README for manual plugin steps."
+    warn "The toggle may not appear in the UI without rebuilding the plugin."
+    warn "To rebuild manually, run: CAELESTIA_GITDIR=/path/to/caelestia $0"
+    warn "Or see README for step-by-step instructions."
 fi
 
 info "Patching shell.json..."
